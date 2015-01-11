@@ -6,6 +6,7 @@ import os
 import sys
 from os.path import expanduser, exists, abspath, join, dirname
 
+command = vim.command
 
 EMPTY_REGISTER = "Wt4jT@%jfeUf%@+3Vrrh6=Y92xzpasVyM55ghTy+48&k35BNXwxyGa8EFq"
 NORMAL_MODE = "n"
@@ -135,11 +136,22 @@ def set_normal_mode():
 def set_visual_mode():
     keys("gv")
 
+def multi_set_global(namespace, **name_values):
+    """ convenience function for setting multiple globals at once in your
+    .vimrc.py, all related to a plugin.  the first argument is a namespace to be
+    appended to the front of each name/value pair. """
+    for name, value in name_values.items():
+        name = namespace + "_" + name
+        set_global(name, value)
+
 def set_global(name, value):
+    value = str(value)
     value = escape_string_sq(value)
     return vim.command("let g:%s='%s'" % (name, value))
 
-def get_global(name):
+def get_global(name, namespace=None):
+    if namespace:
+        name = namespace + "_" + name
     return vim.eval("g:%s" % name)
 
 def to_top():
@@ -222,25 +234,31 @@ def get_in_quotes():
         val = get_register("0")
     return val
 
-def key_map(key, fn, mode=NORMAL_MODE, recursive=False):
+def key_map(key, maybe_fn, mode=NORMAL_MODE, recursive=False):
     map_command = "map"
     if not recursive:
         map_command = "nore" + map_command
     if mode:
         map_command = mode + map_command
 
-    if mode == VISUAL_MODE:
-        old_fn = fn
-        @wraps(fn)
-        def wrapped():
-            sel = get_visual_selection()
-            return old_fn(sel)
-        fn = wrapped
+    if callable(maybe_fn):
+        fn = maybe_fn
+        if mode == VISUAL_MODE:
+            old_fn = fn
+            @wraps(fn)
+            def wrapped():
+                sel = get_visual_selection()
+                return old_fn(sel)
+            fn = wrapped
 
-    fn_key = id(fn)
-    _mapped_functions[fn_key] = fn
-    vim.command("%s %s :python snake.dispatch_mapped_function(%s)<CR>" % (map_command,
-        key, fn_key))
+        fn_key = id(fn)
+        _mapped_functions[fn_key] = fn
+        vim.command("%s %s :python snake.dispatch_mapped_function(%s)<CR>" %
+                (map_command, key, fn_key))
+
+    else:
+        vim.command("%s %s %s" % (map_command, key, maybe_fn))
+
 
 def visual_key_map(key, fn, recursive=False):
     return key_map(key, fn, mode=VISUAL_MODE, recursive=recursive)
@@ -278,13 +296,34 @@ def new_window(size=None, vertical=False):
     vim.command(cmd)
     return get_current_window()
 
-def set(name, value=None):
+
+def toggle_option(name):
+    vim.command("set %s!" % name)
+
+def multi_set_option(*names):
+    """ convenience function for setting a ton of options at once, for example,
+    in your .vimrc.py file.  regular strings are treated as options with no
+    values, while list/tuple elements are considered name/value pairs"""
+    for name in names:
+        val = None
+        if isinstance(name, (list, tuple)):
+            name, val = name
+        set_option(name, val)
+
+
+def set_option(name, value=None):
     if value is not None:
         vim.command("set %s=%s" % (name, value))
     else:
         vim.command("set %s" % name)
 
-def set_local(name, value=None):
+def set_option_default(name):
+    vim.command("set %s&" % name)
+
+def unset_option(name):
+    vim.command("set no%s" % name)
+
+def set_local_option(name, value=None):
     if value is not None:
         vim.command("setlocal %s=%s" % (name, value))
     else:
@@ -339,6 +378,12 @@ def raw_input(prompt=""):
     stuff = vim.eval("input('%s')" % escape_string_sq(prompt))
     vim.command("call inputrestore()")
     return stuff
+
+def multi_command(*cmds):
+    """  convenience function for setting multiple commands at once in your
+    .vimpy.rc, like "syntax on", "nohlsearch", etc """
+    for cmd in cmds:
+        command(cmd)
 
 
 import plugin_loader
