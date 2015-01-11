@@ -135,6 +135,10 @@ def set_normal_mode():
 def set_visual_mode():
     keys("gv")
 
+def set_global(name, value):
+    value = escape_string_sq(value)
+    return vim.command("let g:%s='%s'" % (name, value))
+
 def get_global(name):
     return vim.eval("g:%s" % name)
 
@@ -274,6 +278,11 @@ def new_window(size=None, vertical=False):
     vim.command(cmd)
     return get_current_window()
 
+def set(name, value=None):
+    if value is not None:
+        vim.command("set %s=%s" % (name, value))
+    else:
+        vim.command("set %s" % name)
 
 def set_local(name, value=None):
     if value is not None:
