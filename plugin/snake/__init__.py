@@ -2,6 +2,9 @@ import vim
 import inspect
 from contextlib import contextmanager 
 from functools import wraps
+import os
+import sys
+from os.path import expanduser, exists, abspath, join, dirname
 
 
 EMPTY_REGISTER = "Wt4jT@%jfeUf%@+3Vrrh6=Y92xzpasVyM55ghTy+48&k35BNXwxyGa8EFq"
@@ -22,9 +25,12 @@ def dispatch_mapped_function(key):
     try:
         fn = _mapped_functions[key]
     except KeyError:
+        print _mapped_functions
         raise Exception("unable to find mapped function")
     else:
         return fn()
+
+
 
 @contextmanager
 def preserve_cursor():
@@ -229,7 +235,7 @@ def key_map(key, fn, mode=NORMAL_MODE, recursive=False):
 
     fn_key = id(fn)
     _mapped_functions[fn_key] = fn
-    vim.command("%s %s :python vimawesome.dispatch_mapped_function(%s)<CR>" % (map_command,
+    vim.command("%s %s :python snake.dispatch_mapped_function(%s)<CR>" % (map_command,
         key, fn_key))
 
 def visual_key_map(key, fn, recursive=False):
@@ -317,19 +323,13 @@ def get_buffer_lines(buf):
     b = vim.buffers[buf]
     return list(b)
 
-def test():
-    word = get_word()
-    word = list(word)
-    word.reverse()
-    replace_word("".join(word))
-    return
-    import re
-    stuff = get_buffer_contents(get_current_buffer())
-    matches = re.findall("^def (\w+).+?:", stuff, re.M)
-    matches.sort()
-    buf = get_buffer_in_window(new_window(vertical=True))
-    set_buffer_lines(buf, matches)
-    #set_buffer_contents(get_current_buffer(), "omg\nwtf")
+def raw_input(prompt=""):
+    """ designed to shadow python's raw_input function, because it behaves the
+    same way, except in vim """
+    vim.command("call inputsave()")
+    stuff = vim.eval("input('%s')" % escape_string_sq(prompt))
+    vim.command("call inputrestore()")
+    return stuff
 
-#visual_key_map("<leader>f", test)
-key_map("<leader>f", test)
+
+import plugin_loader
