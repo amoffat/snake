@@ -113,7 +113,7 @@ installed.
 
 Virtualenvs that are created automatically will use your virtualenv\_wrapper
 `WORKON_HOME` environment variable, if one exists, otherwise `~/.virtualenvs`.
-And virtualenvs take the name `snake\_plugin\_<your\_plugin\_name>`.
+And virtualenvs take the name `snake_plugin_<your_plugin_name>`.
 
 Contributing
 ============
@@ -131,7 +131,7 @@ something_awesome = __import__("snake.plugins.tpope/something_awesome")
 
 Where the import hook checks if the plugin exists in `~/.vim/snake`, and if it
 doesn't, looks for a repo to clone at
-`https://github.com/tpope/something\_awesome`
+`https://github.com/tpope/something_awesome`
 
 Automated testing
 -----------------

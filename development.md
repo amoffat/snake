@@ -22,9 +22,9 @@ Common state
 ------------
 
 It's important that when your snake function runs, it doesn't steamroll over the
-user's current state.  Use the `preserve_state` context manager to prevent this.
-By default, it preserves cursor position, and yank (0) and delete (") special
-registers:
+user's current state, unless you're doing it intensionally.  Use the
+`preserve_state` context manager to prevent this.  By default, it preserves
+cursor position, and yank (0) and delete (") special registers:
 
 ```python
 @preserve_state()
@@ -42,7 +42,7 @@ Register state
 The `preserve_state` context manager is nice for general functions, but
 sometimes your function will do something very complex with registers, and you
 wish to preserve those individual registers.  In those instances, use the
-`preserve_registers(\*regs)` with-context around your critical section:
+`preserve_registers(*regs)` with-context around your critical section:
 
 ```python
 def replace_visual_selection(rep):
@@ -52,7 +52,7 @@ def replace_visual_selection(rep):
         keys('"aP')
 ```
 
-All of the registers passed into `preserve_registers(\*regs)` will be restored
+All of the registers passed into `preserve_registers(*regs)` will be restored
 after the context completes.
 
 Cursor state
@@ -63,8 +63,9 @@ When all else fails
 ===================
 
 When you can't achieve your goals with existing snake functions, you should
-resort to using the `vim` module that vim's embedded python provides for you.
-You can use it to eval functions/variables/registers:
+resort to using the [vim](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html)
+module that vim's embedded python provides for you.  You can use it to eval
+functions/variables/registers:
 
 ```python
 def get_current_window():
