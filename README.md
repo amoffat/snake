@@ -9,7 +9,6 @@ from snake import *
 def toggle_snake_case_camel_case():
     """ toggles a word between snake case (some_function) and camelcase
     (someFunction) """
-
     word = get_word()
 
     # it's snake case
@@ -43,8 +42,17 @@ How do I get it?
 Vundle
 ------
 
+Add the following line to your Vundle plugin block:
+
+```
+Plugin 'amoffat/snake'
+```
+
 Pathogen
 --------
+
+TODO
+
 
 Design Philosophy
 =================
@@ -75,6 +83,8 @@ How do I write a plugin?
   code.
 * Add `from snake.plugins import <your_package>` to `~/.vimrc.py`
 * Re-source your `~/.vimrc`
+
+For plugin API reference, check out [api_reference.md](docs/api_reference.md).
 
 What is .vimrc.py?
 ==================
@@ -115,8 +125,51 @@ Virtualenvs that are created automatically will use your virtualenv\_wrapper
 `WORKON_HOME` environment variable, if one exists, otherwise `~/.virtualenvs`.
 And virtualenvs take the name `snake_plugin_<your_plugin_name>`.
 
+Gotchas
+-------
+
+You may be wondering how snake can allow for different virtualenvs for different
+plugins within a single Python process.  There's a little magic going on, and as
+such, there are some gotchas.
+
+When a plugin with a virtualenv is imported, it is imported automatically within
+that plugin's virtualenv.  Then the virtualenv is exited.  This process is
+repeated for each plugin with a virtualenv.
+
+What this means is that all of your plugin's imports *must* occur at your
+plugin's import time:
+
+GOOD:
+```python
+from snake import *
+import requests
+
+def stuff():
+    return requests.get("http://google.com").text
+```
+
+BAD:
+```python
+from snake import *
+
+def stuff():
+    import requests
+    return requests.get("http://google.com").text
+```
+
+The difference here is that in the first example, your plugin will have a
+reference to the correct `requests` module, because it was imported while your
+plugin was being imported inside its virtualenv.  In the second example, when
+`stuff()` runs, it is no longer inside of your plugin's virtualenv, so when it
+imports `requests`, it will not get the correct module or any module at all.
+
+All of this obviously isn't great, and I'm not super pleased with the solution,
+but I don't have a better one at the moment.  Just be careful with your modules.
+
 Contributing
 ============
+
+Read [development.md](docs/development.md) for development info.
 
 Snake needs a vundle equivalent
 -------------------------------
@@ -136,10 +189,9 @@ doesn't, looks for a repo to clone at
 Automated testing
 -----------------
 
-There is no testing right now.  I'm not sure how to do it right now, but it
-might involve running vim in a subprocess in some kind of headless mode,
-applying snake functions, then checking the output of the vim buffer for
-correctness.
+There is no testing right now.  I'm not totally sure how to do it, but it might
+involve running vim in a subprocess in some kind of headless mode, applying
+snake functions, then checking the output of the vim buffer for correctness.
 
 More functions
 --------------

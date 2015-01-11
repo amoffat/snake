@@ -1,3 +1,18 @@
+Reloading snake
+===============
+
+If you've installed snake with vundle, the first thing you might notice is that
+re-sourcing your `.vimrc` does not reload snake, so changes you've made will not
+be visible in your current vim session.  To get around this, add the following
+line to your `.vimrc`:
+
+```
+source ~/.vim/bundle/snake/plugin/snake.vim
+```
+
+Now when you re-source `.vimrc`, snake will be reloaded, and your `.vimrc.py`
+will be re-evaluated.
+
 Punching buttons
 ================
 
