@@ -144,10 +144,12 @@ def multi_set_global(namespace, **name_values):
         name = namespace + "_" + name
         set_global(name, value)
 
-def set_global(name, value):
+def set_global(name, value, namespace=None):
     value = str(value)
     value = escape_string_sq(value)
-    return vim.command("let g:%s='%s'" % (name, value))
+    if namespace:
+        name = namespace + "_" + name
+    return command("let g:%s='%s'" % (name, value))
 
 def get_global(name, namespace=None):
     if namespace:
@@ -194,7 +196,7 @@ def search(s, wrap=True, backwards=False, move=True):
 def keys(k):
     """ feeds keys into vim as if you pressed them """
     k = escape_string_sq(k)
-    vim.command("execute 'normal! %s'" % k)
+    command("execute 'normal! %s'" % k)
 
 def get_register(name):
     val = vim.eval("@%s" % name)
@@ -207,7 +209,7 @@ def clear_register(name):
 
 def set_register(name, val):
     val = escape_string_dq(val)
-    vim.command('let @%s = "%s"' % (name, val))
+    command('let @%s = "%s"' % (name, val))
 
 @preserve_state()
 def get_word():
@@ -253,21 +255,21 @@ def key_map(key, maybe_fn, mode=NORMAL_MODE, recursive=False):
 
         fn_key = id(fn)
         _mapped_functions[fn_key] = fn
-        vim.command("%s %s :python snake.dispatch_mapped_function(%s)<CR>" %
+        command("%s %s :python snake.dispatch_mapped_function(%s)<CR>" %
                 (map_command, key, fn_key))
 
     else:
-        vim.command("%s %s %s" % (map_command, key, maybe_fn))
+        command("%s %s %s" % (map_command, key, maybe_fn))
 
 
 def visual_key_map(key, fn, recursive=False):
     return key_map(key, fn, mode=VISUAL_MODE, recursive=recursive)
 
 def redraw():
-    vim.command("redraw!")
+    command("redraw!")
 
 def set_buffer(buf):
-    vim.command("buffer %d" % buf)
+    command("buffer %d" % buf)
 
 def get_current_buffer():
     return int(vim.eval("bufnr('%')"))
@@ -293,12 +295,12 @@ def new_window(size=None, vertical=False):
     if size is not None:
         cmd = str(size) + cmd
 
-    vim.command(cmd)
+    command(cmd)
     return get_current_window()
 
 
 def toggle_option(name):
-    vim.command("set %s!" % name)
+    command("set %s!" % name)
 
 def multi_set_option(*names):
     """ convenience function for setting a ton of options at once, for example,
@@ -313,27 +315,27 @@ def multi_set_option(*names):
 
 def set_option(name, value=None):
     if value is not None:
-        vim.command("set %s=%s" % (name, value))
+        command("set %s=%s" % (name, value))
     else:
-        vim.command("set %s" % name)
+        command("set %s" % name)
 
 def set_option_default(name):
-    vim.command("set %s&" % name)
+    command("set %s&" % name)
 
 def unset_option(name):
-    vim.command("set no%s" % name)
+    command("set no%s" % name)
 
 def set_local_option(name, value=None):
     if value is not None:
-        vim.command("setlocal %s=%s" % (name, value))
+        command("setlocal %s=%s" % (name, value))
     else:
-        vim.command("setlocal %s" % name)
+        command("setlocal %s" % name)
 
 def new_buffer(name, type=BUFFER_SCRATCH):
-    vim.command("new")
+    command("new")
     name = escape_string_sq(name)
     name = escape_spaces(name)
-    vim.command("file %s" % name)
+    command("file %s" % name)
 
     if type is BUFFER_SCRATCH:
         set_local("buftype", "nofile")
@@ -341,7 +343,7 @@ def new_buffer(name, type=BUFFER_SCRATCH):
         set_local("noswapfile")
 
     buf = get_current_buffer()
-    vim.command("close!")
+    command("close!")
     return buf
 
 @preserve_state()
@@ -374,9 +376,9 @@ def get_buffer_lines(buf):
 def raw_input(prompt=""):
     """ designed to shadow python's raw_input function, because it behaves the
     same way, except in vim """
-    vim.command("call inputsave()")
+    command("call inputsave()")
     stuff = vim.eval("input('%s')" % escape_string_sq(prompt))
-    vim.command("call inputrestore()")
+    command("call inputrestore()")
     return stuff
 
 def multi_command(*cmds):

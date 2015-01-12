@@ -1,7 +1,7 @@
-Snake
-=====
+Snake (SNAAAAAAAAKKKE)
+======================
 
-Snake lets you use Python to its fullest extent to write powerful vim plugins:
+Snake lets you use Python to its fullest extent to write vim plugins:
 
 ```python
 from snake import *
@@ -95,18 +95,22 @@ inclined, you could move all of your vim settings and options into `.vimrc.py`:
 ```python
 from snake import *
 
-set("exrc")
-set("nocompatible")
-set("secure")
-set("textwidth", 80)
-set("number")
+multi_set_option(
+    "nocompatible",
+    "exrc",
+    "secure",
 
-tab = 4
-set("shiftwidth", tab)
-set("softtabstop", tab)
-set("tabstop", tab)
+    ("background", "dark"),
+    ("textwidth", 80),
 
-set_global("ctrlp_map", "<c-p>")
+    ("shiftwidth", tab),
+    ("softtabstop", tab),
+    ("tabstop", tab),
+    "expandtab",
+)
+
+set_global("mapleader", ",")
+
 ...
 ```
 

@@ -3,6 +3,11 @@ import sys
 import os
 from os.path import expanduser, exists, abspath, join, dirname
 from contextlib import contextmanager
+import logging
+
+
+log = logging.getLogger("snake.plugins")
+
 
 # virtualenv may not exist, but we also may not need it if the user is just
 # running scripts that have no dependencies outside of the stdlib
