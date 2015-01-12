@@ -255,7 +255,7 @@ def key_map(key, maybe_fn, mode=NORMAL_MODE, recursive=False):
 
         fn_key = id(fn)
         _mapped_functions[fn_key] = fn
-        command("%s %s :python snake.dispatch_mapped_function(%s)<CR>" %
+        command("%s <silent> %s :python snake.dispatch_mapped_function(%s)<CR>" %
                 (map_command, key, fn_key))
 
     else:
