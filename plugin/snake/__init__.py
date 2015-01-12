@@ -236,12 +236,18 @@ def get_in_quotes():
         val = get_register("0")
     return val
 
-def key_map(key, maybe_fn, mode=NORMAL_MODE, recursive=False):
+def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False):
     map_command = "map"
     if not recursive:
         map_command = "nore" + map_command
     if mode:
         map_command = mode + map_command
+
+    if maybe_fn is None:
+        def wrapper(f):
+            key_map(key, f, mode=mode, recursive=recursive)
+            return f
+        return wrapper
 
     if callable(maybe_fn):
         fn = maybe_fn
