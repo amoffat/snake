@@ -146,7 +146,8 @@ Please install virtualenv and pip so that one can be created." % plugin_name)
 
         return mod
 
-_snake_plugin_paths = [expanduser("~/.vim/snake")]
+
+_snake_plugin_paths = snake.get_runtime_path()
 sys.meta_path = [SnakePluginHook(_snake_plugin_paths)]
 
 
@@ -173,6 +174,7 @@ def import_source(name, path):
     h = open(path, desc[1])
     module = imp.load_module(name, h, path, desc)
     return module
+
 
 vimrc_path = expanduser("~/.vimrc.py")
 if exists(vimrc_path):
