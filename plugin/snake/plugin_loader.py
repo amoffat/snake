@@ -4,6 +4,7 @@ import os
 from os.path import expanduser, exists, abspath, join, dirname
 from contextlib import contextmanager
 import logging
+import snake
 
 
 log = logging.getLogger("snake.plugins")

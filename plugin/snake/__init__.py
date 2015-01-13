@@ -405,4 +405,7 @@ def multi_command(*cmds):
         command(cmd)
 
 
-import plugin_loader
+if "snake.plugin_loader" in sys.modules:
+    plugin_loader = reload(plugin_loader)
+else:
+    import plugin_loader
