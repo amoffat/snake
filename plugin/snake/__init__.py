@@ -312,6 +312,17 @@ def multi_set_option(*names):
             name, val = name
         set_option(name, val)
 
+def set_runtime_path(parts):
+    rtp = ",".join(parts)
+    set_option("rtp", rtp)
+
+def get_runtime_path():
+    rtp = get_option("rtp")
+    return rtp.split(",")
+
+def get_option(name):
+    value = vim.eval("&%s" % name)
+    return value
 
 def set_option(name, value=None):
     if value is not None:
