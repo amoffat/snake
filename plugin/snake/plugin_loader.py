@@ -64,7 +64,7 @@ class SnakePluginHook(object):
     def find_module(self, fullname, path=None):
         loader = None
         self.parts = fullname.split(".")
-        self.plugin_module = ".".join(self.parts[1:])
+        self.plugin_module = ".".join(self.parts[-1:])
 
         if fullname.startswith("snake.plugins"):
             # its our initial snake_plugins dummy module
