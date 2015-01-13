@@ -90,12 +90,8 @@ class SnakePluginHook(object):
     def load_module(self, fullname):
         mod = None
 
-        # have we already loaded it?
-        if fullname in sys.modules:
-            mod = sys.modules[fullname]
-
         # we haven't loaded it, so let's figure out what we're loading
-        elif fullname.startswith("snake.plugins"):
+        if fullname.startswith("snake.plugins"):
             # its our initial snake_plugins dummy module
             if len(self.parts) == 2:
                 mod = imp.new_module(self.parts[0])
