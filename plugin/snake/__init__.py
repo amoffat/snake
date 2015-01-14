@@ -322,7 +322,7 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
         command("%s %s %s" % (map_command, key, maybe_fn))
 
 
-def visual_kecy_map(key, fn, recursive=False):
+def visual_key_map(key, fn, recursive=False):
     return key_map(key, fn, mode=VISUAL_MODE, recursive=recursive)
 
 def redraw():
