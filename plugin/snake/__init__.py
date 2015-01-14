@@ -1,7 +1,7 @@
 import vim
 import inspect
 from contextlib import contextmanager 
-from functools import wraps
+from functools import wraps, partial
 import os
 import sys
 from os.path import expanduser, exists, abspath, join, dirname
@@ -11,9 +11,13 @@ command = vim.command
 EMPTY_REGISTER = "Wt4jT@%jfeUf%@+3Vrrh6=Y92xzpasVyM55ghTy+48&k35BNXwxyGa8EFq"
 NORMAL_MODE = "n"
 VISUAL_MODE = "v"
+INSERT_MODE = "i"
+COMMAND_MODE = "c"
 
 BUFFER_SCRATCH = 0
 
+NS_GLOBAL = "g"
+NS_BUFFER = "b"
 
 _mapped_functions = {
 }
@@ -26,12 +30,17 @@ def dispatch_mapped_function(key):
     try:
         fn = _mapped_functions[key]
     except KeyError:
-        print _mapped_functions
         raise Exception("unable to find mapped function")
     else:
         return fn()
 
+def generate_autocommand_name(fn):
+    return inspect.getsourcefile(fn) + ":" + fn.__name__
 
+def register_fn(fn):
+    fn_key = id(fn)
+    _mapped_functions[fn_key] = fn
+    return "snake.dispatch_mapped_function(%s)" % fn_key
 
 @contextmanager
 def preserve_cursor():
@@ -93,6 +102,20 @@ def preserve_registers(*regs):
             if old_contents is not None:
                 set_register(reg, old_contents)
 
+def abbrev(word, expansion, local=False):
+    """ creates an abbreviation in insert mode.  expansion can be a string to
+    expand to or a function that returns a value to serve as the expansion """
+
+    cmd = "iabbrev"
+    if local:
+        cmd = cmd + " <buffer>"
+
+    if callable(expansion):
+        fn_str = register_fn(expansion)
+        expansion = "<C-r>=pyeval('%s')<CR>" % escape_string_sq(fn_str)
+
+    command("%s %s %s" % (cmd, word, expansion))
+     
 
 def get_mode():
     return vim.eval("mode(1)")
@@ -136,25 +159,44 @@ def set_normal_mode():
 def set_visual_mode():
     keys("gv")
 
-def multi_set_global(namespace, **name_values):
+def multi_let(namespace, **name_values):
     """ convenience function for setting multiple globals at once in your
     .vimrc.py, all related to a plugin.  the first argument is a namespace to be
     appended to the front of each name/value pair. """
     for name, value in name_values.items():
         name = namespace + "_" + name
-        set_global(name, value)
+        let(name, value)
 
-def set_global(name, value, namespace=None):
-    value = str(value)
-    value = escape_string_sq(value)
+def _serialize_obj(obj):
+    if isinstance(obj, basestring):
+        obj = "'%s'" % escape_string_sq(obj)
+    elif isinstance(obj, dict):
+        obj = str(obj)
+    return obj
+
+def let_variable(name, value, namespace=None, scope=NS_GLOBAL):
+    value = _serialize_obj(value)
     if namespace:
         name = namespace + "_" + name
-    return command("let g:%s='%s'" % (name, value))
+    return command("let %s:%s=%s" % (scope, name, value))
+
+def let(name, value, namespace=None):
+    return let_variable(name, value, namespace, NS_GLOBAL)
+
+def let_buffer_local(name, value, namespace=None):
+    return let_variable(name, value, namespace, NS_BUFFER)
 
 def get_global(name, namespace=None):
     if namespace:
         name = namespace + "_" + name
-    return vim.eval("g:%s" % name)
+    try:
+        val = vim.eval("g:%s" % name)
+    except vim.error as e:
+        if "Vim:E121" in e.message:
+            val = None
+        else:
+            raise
+    return val
 
 def to_top():
     keys("gg")
@@ -236,39 +278,51 @@ def get_in_quotes():
         val = get_register("0")
     return val
 
-def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False):
+
+def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
+        local=False):
+
+    # we're using key_map as a decorator
+    if maybe_fn is None:
+        def wrapper(fn):
+            key_map(key, fn, mode=mode, recursive=recursive, local=local)
+            return fn
+        return wrapper
+
     map_command = "map"
     if not recursive:
         map_command = "nore" + map_command
     if mode:
         map_command = mode + map_command
 
-    if maybe_fn is None:
-        def wrapper(f):
-            key_map(key, f, mode=mode, recursive=recursive)
-            return f
-        return wrapper
+    if local:
+        map_command = map_command + " <buffer>"
 
     if callable(maybe_fn):
         fn = maybe_fn
+
+        # if we're mapping in visual mode, we're going to assume that the
+        # function takes the contents of the visual selection.  if the function
+        # returns something, let's replace the visual selection with it.  i
+        # think these are reasonable assumptions
         if mode == VISUAL_MODE:
             old_fn = fn
             @wraps(fn)
             def wrapped():
                 sel = get_visual_selection()
-                return old_fn(sel)
+                rep = old_fn(sel)
+                if rep is not None:
+                    replace_visual_selection(rep)
             fn = wrapped
 
-        fn_key = id(fn)
-        _mapped_functions[fn_key] = fn
-        command("%s <silent> %s :python snake.dispatch_mapped_function(%s)<CR>" %
-                (map_command, key, fn_key))
+        call = register_fn(fn)
+        command("%s <silent> %s :python %s<CR>" % (map_command, key, call))
 
     else:
         command("%s %s %s" % (map_command, key, maybe_fn))
 
 
-def visual_key_map(key, fn, recursive=False):
+def visual_kecy_map(key, fn, recursive=False):
     return key_map(key, fn, mode=VISUAL_MODE, recursive=recursive)
 
 def redraw():
@@ -330,11 +384,15 @@ def get_option(name):
     value = vim.eval("&%s" % name)
     return value
 
-def set_option(name, value=None):
+def set_option(name, value=None, local=False):
+    cmd = "set"
+    if local:
+        cmd = "setlocal"
+
     if value is not None:
-        command("set %s=%s" % (name, value))
+        command("%s %s=%s" % (cmd, name, value))
     else:
-        command("set %s" % name)
+        command("%s %s" % (cmd, name))
 
 def set_option_default(name):
     command("set %s&" % name)
@@ -403,6 +461,48 @@ def multi_command(*cmds):
     .vimpy.rc, like "syntax on", "nohlsearch", etc """
     for cmd in cmds:
         command(cmd)
+
+
+class AutoCommandContext(object):
+    """ an object of this class is passed to functions decorated with one of our
+    autocommand decorators.  its purpose is to give the decorated function
+    access to buffer-local versions of our helper functions """
+
+    def abbrev(self, *args, **kwargs):
+        fn = partial(abbrev, local=True)
+        return fn(*args, **kwargs)
+
+    def let(self, *args, **kwargs):
+        fn = partial(let, scope=NS_BUFFER)
+        return fn(*args, **kwargs)
+
+    def set_option(self, *args, **kwargs):
+        fn = partial(set_option, local=True)
+        return fn(*args, **kwargs)
+
+    def key_map(self, *args, **kwargs):
+        fn = partial(key_map, local=True)
+        return fn(*args, **kwargs)
+
+
+def file_is(filetype):
+    """ a decorator for functions you wish to run when the buffer
+    filetype=filetype.  your function will be passed an instance of
+    AutoCommandContext, which contains on it *buffer-local* methods that would
+    be useful to you.  this is useful if you want to set some keybindings for a
+    python buffer that you just opened """
+
+    def wrapped(fn):
+        au_name = generate_autocommand_name(fn)
+        command("augroup %s" % au_name)
+        command("autocmd!")
+        ctx = AutoCommandContext()
+        call = register_fn(partial(fn, ctx))
+        command("autocmd FileType %s :python %s" % (filetype, call))
+        command("augroup END")
+        return fn
+
+    return wrapped
 
 
 if "snake.plugin_loader" in sys.modules:
