@@ -34,7 +34,43 @@ Why do you want this?
 =====================
 
 Vim is great, but vimscript is painful as a programming language.  Let's use
-Python instead.
+Python instead.  Here's some cool things you can do:
+
+Bind a function to a key
+------------------------
+
+```python
+from snake import *
+
+@key_map("<leader>r")
+def reverse():
+    word = list(get_word())
+    word.reverse()
+    replace_word("".join(word))
+```
+
+Use a function for an abbreviation
+----------------------------------
+
+```python
+from snake import *
+from os import getcwd
+
+abbrev("cwd", getcwd)
+```
+
+Have a function run for a file type
+-----------------------------------
+
+```python
+from snake import *
+
+@when_buffer_is("python")
+def setup_python_folding(buf):
+    buf.set_option("foldmethod", "indent")
+    buf.set_option("foldnestmax", 2)
+    buf.key_map("<space>", "za")
+```
 
 How do I get it?
 ================
