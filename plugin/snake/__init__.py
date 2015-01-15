@@ -115,7 +115,15 @@ def abbrev(word, expansion, local=False):
         expansion = "<C-r>=pyeval('%s')<CR>" % escape_string_sq(fn_str)
 
     command("%s %s %s" % (cmd, word, expansion))
+
+def expand(stuff):
+    return vim.eval("expand('%s')" % escape_string_sq(stuff))
      
+def get_current_dir():
+    return dirname(get_current_file())
+
+def get_current_file():
+    return expand("%:p")
 
 def get_mode():
     return vim.eval("mode(1)")
