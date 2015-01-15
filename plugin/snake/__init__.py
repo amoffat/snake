@@ -493,7 +493,7 @@ class AutoCommandContext(object):
         return fn(*args, **kwargs)
 
 
-def file_is(filetype):
+def when_buffer_is(filetype):
     """ a decorator for functions you wish to run when the buffer
     filetype=filetype.  your function will be passed an instance of
     AutoCommandContext, which contains on it *buffer-local* methods that would
