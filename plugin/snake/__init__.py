@@ -5,6 +5,7 @@ from functools import wraps, partial
 import os
 import sys
 from os.path import expanduser, exists, abspath, join, dirname
+import time
 
 command = vim.command
 
@@ -127,6 +128,13 @@ def get_current_file():
 
 def get_mode():
     return vim.eval("mode(1)")
+
+def get_num_lines():
+    return int(vim.eval("line('$')"))
+
+def is_last_line():
+    row, _ = get_cursor_position()
+    return row == get_num_lines()
 
 
 def get_cursor_position():
@@ -317,6 +325,7 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
             old_fn = fn
             @wraps(fn)
             def wrapped():
+                set_normal_mode()
                 sel = get_visual_selection()
                 rep = old_fn(sel)
                 if rep is not None:
@@ -330,11 +339,16 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
         command("%s %s %s" % (map_command, key, maybe_fn))
 
 
-def visual_key_map(key, fn, recursive=False):
-    return key_map(key, fn, mode=VISUAL_MODE, recursive=recursive)
+visual_key_map = partial(key_map, mode=VISUAL_MODE)
 
 def redraw():
     command("redraw!")
+
+def step():
+    """ simple debugging tool to see what the hell has happened in your script
+    so far """
+    redraw()
+    time.sleep(1)
 
 def set_buffer(buf):
     command("buffer %d" % buf)
@@ -439,7 +453,10 @@ def replace_visual_selection(rep):
     with preserve_registers("a"):
         set_register("a", rep)
         keys("gvd")
-        keys('"aP')
+        if is_last_line():
+            keys('"ap')
+        else:
+            keys('"aP')
 
 def set_buffer_contents(buf, s):
     set_buffer_lines(buf, s.split("\n"))
@@ -486,6 +503,10 @@ class AutoCommandContext(object):
 
     def set_option(self, *args, **kwargs):
         fn = partial(set_option, local=True)
+        return fn(*args, **kwargs)
+
+    def visual_key_map(self, *args, **kwargs):
+        fn = partial(visual_key_map, local=True)
         return fn(*args, **kwargs)
 
     def key_map(self, *args, **kwargs):
