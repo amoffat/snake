@@ -143,6 +143,15 @@ def get_cursor_position():
 def set_cursor_position(p):
     vim.current.window.cursor = p
 
+def get_visual_range():
+    _, start_row, start_col, _ = vim.eval("getpos('v')")
+    start_row = int(start_row)
+    start_col = int(start_col)
+    with preserve_cursor():
+        keys("`>`")
+        end_row, end_col = get_cursor_position()
+    return (start_row, start_col), (end_row, end_col)
+
 
 def preserve_state():
     """ a general decorator for preserving most state, including cursor, mode,
@@ -464,6 +473,9 @@ def set_buffer_contents(buf, s):
 def set_buffer_lines(buf, l):
     b = vim.buffers[buf]
     b[:] = l
+
+def get_current_buffer_contents():
+    return get_buffer_contents(get_current_buffer())
 
 def get_buffer_contents(buf):
     contents = "\n".join(get_buffer_lines(buf))
