@@ -148,7 +148,7 @@ def get_visual_range():
     start_row = int(start_row)
     start_col = int(start_col)
     with preserve_cursor():
-        keys("`>`")
+        keys("`>")
         end_row, end_col = get_cursor_position()
     return (start_row, start_col), (end_row, end_col)
 
