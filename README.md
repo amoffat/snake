@@ -6,6 +6,7 @@ Snake lets you use Python to its fullest extent to write vim plugins:
 ```python
 from snake import *
 
+@key_map("<leader>c")
 def toggle_snake_case_camel_case():
     """ toggles a word between snake case (some_function) and camelcase
     (someFunction) """
@@ -24,8 +25,6 @@ def toggle_snake_case_camel_case():
         chunks = filter(None, re.split("([A-Z][^A-Z]*)", word))
         snake_case = "_".join([chunk.lower() for chunk in chunks])
         replace_word(snake_case)
-
-key_map("<leader>c", toggle_snake_case_camel_case)
 ```
 
 ![Metal Gear Solid Snake Success](http://i.imgur.com/ZFr3vXG.gif)

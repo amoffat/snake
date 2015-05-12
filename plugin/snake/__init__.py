@@ -39,6 +39,8 @@ def generate_autocommand_name(fn):
     return inspect.getsourcefile(fn) + ":" + fn.__name__
 
 def register_fn(fn):
+    """ takes a function and returns a string handle that we can use to call the
+    function via the "python" command in vimscript """
     fn_key = id(fn)
     _mapped_functions[fn_key] = fn
     return "snake.dispatch_mapped_function(%s)" % fn_key
@@ -309,6 +311,8 @@ def get_in_quotes():
 
 def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
         local=False, **addl_options):
+    """ a function to bind a key to some action, be it a vim action or a python
+    function.  key_map takes a vim keymapping as the first argument """
 
     # we're using key_map as a decorator
     if maybe_fn is None:
