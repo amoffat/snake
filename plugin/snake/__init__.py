@@ -308,7 +308,7 @@ def get_in_quotes():
 
 
 def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
-        local=False):
+        local=False, **addl_options):
 
     # we're using key_map as a decorator
     if maybe_fn is None:
@@ -342,6 +342,8 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
                 rep = old_fn(sel)
                 if rep is not None:
                     replace_visual_selection(rep)
+                if addl_options.get("preserve_selection", False):
+                    reselect_last_visual_selection()
             fn = wrapped
 
         call = register_fn(fn)
