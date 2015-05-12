@@ -181,6 +181,9 @@ def escape_string_sq(s):
 def set_normal_mode():
     keys("\<ESC>")
 
+def reselect_last_visual_selection():
+    keys("gv")
+
 def set_visual_mode():
     keys("gv")
 
