@@ -20,7 +20,7 @@ BUFFER_SCRATCH = 0
 NS_GLOBAL = "g"
 NS_BUFFER = "b"
 
-_mapped_functions = {
+mapped_functions = {
 }
 
 def dispatch_mapped_function(key):
@@ -29,7 +29,7 @@ def dispatch_mapped_function(key):
     anonymous, callable on key press", we have a single dispatch function to do
     that work for vim """
     try:
-        fn = _mapped_functions[key]
+        fn = mapped_functions[key]
     except KeyError:
         raise Exception("unable to find mapped function")
     else:
@@ -42,7 +42,7 @@ def register_fn(fn):
     """ takes a function and returns a string handle that we can use to call the
     function via the "python" command in vimscript """
     fn_key = id(fn)
-    _mapped_functions[fn_key] = fn
+    mapped_functions[fn_key] = fn
     return "snake.dispatch_mapped_function(%s)" % fn_key
 
 @contextmanager
@@ -102,7 +102,9 @@ def preserve_registers(*regs):
     finally:
         for reg in regs + special_regs:
             old_contents = old_regs[reg]
-            if old_contents is not None:
+            if old_contents is None:
+                clear_register(reg)
+            else:
                 set_register(reg, old_contents)
 
 def abbrev(word, expansion, local=False):
@@ -140,18 +142,24 @@ def is_last_line():
 
 
 def get_cursor_position():
-    return vim.current.window.cursor
+    #return vim.current.window.cursor
+    _, start_row, start_col, _ = vim.eval("getpos('.')")
+    return int(start_row), int(start_col)
 
-def set_cursor_position(p):
-    vim.current.window.cursor = p
+def set_cursor_position(pos):
+    full_pos = "[0, %d, %d, 0]" % (pos[0], pos[1])
+    command("call setpos('.', %s)" % full_pos)
+    #vim.current.window.cursor = p
 
 def get_visual_range():
+    keys("\<esc>gv")
     _, start_row, start_col, _ = vim.eval("getpos('v')")
     start_row = int(start_row)
     start_col = int(start_col)
     with preserve_cursor():
         keys("`>")
         end_row, end_col = get_cursor_position()
+    reselect_last_visual_selection()
     return (start_row, start_col), (end_row, end_col)
 
 
@@ -167,17 +175,15 @@ def preserve_state():
     return decorator
 
 def escape_string_dq(s):
-    s = s.replace('\\', '\\\\')
-    s = s.replace('"', '\\"')
+    s = s.replace('"', r'\"')
     return s
 
 def escape_spaces(s):
-    s = s.replace(" ", "\ ")
+    s = s.replace(" ", r"\ ")
     return s
 
 def escape_string_sq(s):
-    s = s.replace('\\', '\\\\')
-    s = s.replace("'", "\\'")
+    s = s.replace("'", r"\'")
     return s
 
 def set_normal_mode():
@@ -265,14 +271,20 @@ def search(s, wrap=True, backwards=False, move=True):
     return pos
 
 
-def keys(k):
+def keys(k, mappings=False):
     """ feeds keys into vim as if you pressed them """
-    k = escape_string_sq(k)
-    command("execute 'normal! %s'" % k)
+    k = escape_string_dq(k)
+    cmd = "normal"
+    if mappings:
+        cmd += "!"
+    command('execute "%s %s"' % (cmd, k))
 
 def get_register(name):
     val = vim.eval("@%s" % name)
-    if val == EMPTY_REGISTER:
+    # originall we just tested for EMPTY_REGISTER, but fresh registers return an
+    # empty string, so maybe we should be testing that as well?  does it ever
+    # make sense to return an empty string from a register?
+    if val == EMPTY_REGISTER or val == "":
         val = None
     return val
 
@@ -280,7 +292,7 @@ def clear_register(name):
     set_register(name, EMPTY_REGISTER)
 
 def set_register(name, val):
-    val = escape_string_dq(val)
+    val = escape_string_dq(str(val))
     command('let @%s = "%s"' % (name, val))
 
 @preserve_state()
@@ -294,7 +306,7 @@ def delete_word():
 
 @preserve_state()
 def replace_word(rep):
-    set_register('0', rep)
+    set_register("0", rep)
     keys("viwp")
 
 @preserve_state()
@@ -463,8 +475,9 @@ def new_buffer(name, type=BUFFER_SCRATCH):
 
 @preserve_state()
 def get_visual_selection():
-    keys("gvy")
+    keys("\<esc>gvy")
     val = get_register("0")
+    reselect_last_visual_selection()
     return val
 
 def replace_visual_selection(rep):

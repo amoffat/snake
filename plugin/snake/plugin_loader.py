@@ -176,7 +176,8 @@ def import_source(name, path):
     return module
 
 
+load_vimrc = False
 
 vimrc_path = expanduser("~/.vimrc.py")
-if exists(vimrc_path):
+if exists(vimrc_path) and load_vimrc:
     import_source("vimrc", vimrc_path)
