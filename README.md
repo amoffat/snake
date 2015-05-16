@@ -27,8 +27,8 @@ def toggle_snake_case_camel_case():
         replace_word(snake_case)
 ```
 
-Pressing "<leader>c" in vim will take the current variable name and turn it into
-camel-case if it's snake-cased, or snake-cased if it's camel-cased!
+Pressing "&lt;leader&gt;c" will then toggle between snake and camel case for the
+current word!
 
 ![Metal Gear Solid Snake Success](http://i.imgur.com/ZFr3vXG.gif)
 
@@ -102,6 +102,39 @@ Pathogen
 
 TODO
 
+Where do I write my Snake code?
+===============================
+
+`.vimrc.py` is intended to be the python equivalent of `.vimrc`.  It should
+contain all of your Snake code, and Snake will autoload it on startup.  If you
+were so inclined, you could move all of your vim settings and options into
+`.vimrc.py` as well:
+
+```python
+from snake import *
+
+multi_set_option(
+    "nocompatible",
+    "exrc",
+    "secure",
+
+    ("background", "dark"),
+    ("textwidth", 80),
+
+    ("shiftwidth", tab),
+    ("softtabstop", tab),
+    ("tabstop", tab),
+    "expandtab",
+)
+
+let("mapleader", ",")
+
+multi_command(
+    "nohlsearch",
+    "syntax on",
+)
+...
+```
 
 Design Philosophy
 =================
@@ -135,34 +168,6 @@ How do I write a plugin?
 * Re-source your `~/.vimrc`
 
 For plugin API reference, check out [api_reference.md](docs/api_reference.md).
-
-What is .vimrc.py?
-==================
-
-`.vimrc.py` is intended to be the python equivalent of `.vimrc`.  If you were so
-inclined, you could move all of your vim settings and options into `.vimrc.py`:
-
-```python
-from snake import *
-
-multi_set_option(
-    "nocompatible",
-    "exrc",
-    "secure",
-
-    ("background", "dark"),
-    ("textwidth", 80),
-
-    ("shiftwidth", tab),
-    ("softtabstop", tab),
-    ("tabstop", tab),
-    "expandtab",
-)
-
-let("mapleader", ",")
-
-...
-```
 
 Can I use a virtualenv for my plugin?
 =====================================
