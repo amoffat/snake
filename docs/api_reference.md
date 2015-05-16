@@ -1,4 +1,4 @@
-TODO document this stuff
+TODO please help document this stuff
 
 Cursor
 ======
@@ -16,6 +16,7 @@ Visual
 ======
 * get_visual_selection()
 * replace_visual_selection(rep)
+* get_visual_range()
 
 Input
 =====
@@ -32,6 +33,7 @@ Buffers
 * set_buffer_lines(buf, lines)
 * get_buffer_contents(buf)
 * get_buffer_lines(buf)
+* when_buffer_is(filetype)
 
 Windows
 =======
@@ -39,15 +41,12 @@ Windows
 * get_num_windows()
 * new_window(size=None, vertical=False)
 
-Movement
-========
-* to_top()
 
 Variables
 =========
-* get_global(name, namespace=None)
-* set_global(name, value, namespace=None)
-* multi_set_global(namespace, **name_values)
+* get(name, namespace=None, scope=NS_GLOBAL)
+* let(name, value, namespace=None, scope=NS_GLOBAL)
+* multi_let(namespace, **name_values)
 
 Options
 =======
@@ -68,11 +67,6 @@ Key Mapping
 ===========
 * key_map(key, fn_or_command, mode=NORMAL_MODE, recursive=False)
 * visual_key_map(key, fn, recursive=False)
-
-Modes
-=====
-* set_normal_mode()
-* set_visual_mode()
 
 Searching
 =========

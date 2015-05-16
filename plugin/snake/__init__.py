@@ -7,9 +7,9 @@ from os.path import expanduser, exists, abspath, join, dirname
 import time
 import re
 
-command = vim.command
+__version__ = "0.1"
 
-EMPTY_REGISTER = "Wt4jT@%jfeUf%@+3Vrrh6=Y92xzpasVyM55ghTy+48&k35BNXwxyGa8EFq"
+
 NORMAL_MODE = "n"
 VISUAL_MODE = "v"
 INSERT_MODE = "i"
@@ -21,8 +21,24 @@ NS_GLOBAL = "g"
 NS_BUFFER = "b"
 
 _LEADER_REGEX = re.compile(r"\\<leader>", re.I)
+_BUFFER_LIST_REGEX = re.compile(r"^\s*(\d+)\s+(.+?)\s+\"(.+?)\"", re.M)
+
 _mapped_functions = {
 }
+
+def command(cmd, capture=False):
+    """ wraps vim.capture to execute a vim command.  if capture is true, we'll
+    return the output of that command """
+    if capture:
+        with preserve_registers("a"):
+            vim.command("redir @a")
+            vim.command(cmd)
+            vim.command("redir END")
+            out = get_register("a")
+    else:
+        out = None
+        vim.command(cmd)
+    return out
 
 def dispatch_mapped_function(key):
     """ this function will be called by any function mapped to a key in visual
@@ -131,6 +147,9 @@ def get_current_dir():
 def get_current_file():
     return expand("%:p")
 
+def get_alternate_file():
+    return expand("#:p")
+
 def get_mode():
     return vim.eval("mode(1)")
 
@@ -148,11 +167,13 @@ def get_cursor_position():
     return int(start_row), int(start_col)
 
 def set_cursor_position(pos):
+    """ set our cursor position.  pos is a tuple of (row, col) """
     full_pos = "[0, %d, %d, 0]" % (pos[0], pos[1])
     command("call setpos('.', %s)" % full_pos)
-    #vim.current.window.cursor = p
 
 def get_visual_range():
+    """ returns the start (row, col) and end (row, col) of our range in visual
+    mode """
     keys("\<esc>gv")
     _, start_row, start_col, _ = vim.eval("getpos('v')")
     start_row = int(start_row)
@@ -187,13 +208,7 @@ def escape_string_sq(s):
     s = s.replace("'", r"\'")
     return s
 
-def set_normal_mode():
-    keys("\<ESC>")
-
 def reselect_last_visual_selection():
-    keys("gv")
-
-def set_visual_mode():
     keys("gv")
 
 def multi_let(namespace, **name_values):
@@ -216,6 +231,7 @@ def _compose_let_name(name, namespace, scope):
 
 
 def let(name, value, namespace=None, scope=NS_GLOBAL):
+    """ sets a variable """
     value = _serialize_obj(value)
     name = _compose_let_name(name, namespace, scope)
     return command("let %s=%s" % (name, value))
@@ -223,6 +239,7 @@ def let(name, value, namespace=None, scope=NS_GLOBAL):
 let_buffer_local = partial(let, scope=NS_BUFFER)
 
 def get(name, namespace=None, scope=NS_GLOBAL):
+    """ gets a variable """
     try:
         val = vim.eval(_compose_let_name(name, namespace, scope))
     except vim.error as e:
@@ -233,10 +250,6 @@ def get(name, namespace=None, scope=NS_GLOBAL):
     return val
 
 get_buffer_local = partial(get, scope=NS_BUFFER)
-
-
-def to_top():
-    keys("gg")
 
 def search(s, wrap=True, backwards=False, move=True):
     """ searches for string s, returning the (row, column) of the next match, or
@@ -288,15 +301,12 @@ def keys(k, keymaps=True):
 
 def get_register(name):
     val = vim.eval("@%s" % name)
-    # originall we just tested for EMPTY_REGISTER, but fresh registers return an
-    # empty string, so maybe we should be testing that as well?  does it ever
-    # make sense to return an empty string from a register?
-    if val == EMPTY_REGISTER or val == "":
+    if val == "":
         val = None
     return val
 
 def clear_register(name):
-    set_register(name, EMPTY_REGISTER)
+    set_register(name, "")
 
 def set_register(name, val):
     val = escape_string_dq(str(val))
@@ -304,15 +314,18 @@ def set_register(name, val):
 
 @preserve_state()
 def get_word():
+    """ gets the word under the cursor """
     keys("yiw")
     return get_register("0")
 
 @preserve_state()
 def delete_word():
+    """ deletes the word under the cursor """
     keys("diw")
 
 @preserve_state()
 def replace_word(rep):
+    """ replaces the word under the cursor with rep """
     set_register("0", rep)
     keys("viwp")
 
@@ -392,6 +405,17 @@ def set_buffer(buf):
 def get_current_buffer():
     return int(vim.eval("bufnr('%')"))
 
+def get_num_buffers():
+    i = int(vim.eval("bufnr('$')"))
+    j = 0
+    while i >= 1:
+        listed = bool(int(vim.eval("buflisted(%d)" % i)))
+        if listed:
+            j += 1
+        i -= 1
+    return j
+
+
 def get_current_window():
     return int(vim.eval("winnr()"))
 
@@ -464,19 +488,52 @@ def set_local_option(name, value=None):
     else:
         command("setlocal %s" % name)
 
+def _parse_buffer_flags(flags):
+    mapping = {
+        "u": "unlisted",
+        "%": "current",
+        "#": "alternate",
+        "a": "active",
+        "h": "hidden",
+        "=": "readonly",
+        "+": "modified",
+        "x": "errors",
+    }
+    parsed = {}
+    for k,name in mapping.items():
+        parsed[name] = k in flags
+    return parsed
+
+def get_buffers():
+    """ gets all the buffers and the data associated with them """
+    out = command("ls", capture=True)
+    match = _BUFFER_LIST_REGEX.findall(out)
+    buffers = {}
+    if match:
+        for (num, flags, name) in match:
+            num = int(num)
+            buffers[num] = {
+                "name": name,
+                "flags": _parse_buffer_flags(flags)
+            }
+    return buffers
+
 def new_buffer(name, type=BUFFER_SCRATCH):
-    command("new")
-    name = escape_string_sq(name)
-    name = escape_spaces(name)
-    command("file %s" % name)
+    """ creates a new buffer """
+    # creating a new buffer will switch to it, so we need to preserve our
+    # current buffer
+    with preserve_buffer():
+        command("new")
+        name = escape_string_sq(name)
+        name = escape_spaces(name)
+        command("file %s" % name)
 
-    if type is BUFFER_SCRATCH:
-        set_local("buftype", "nofile")
-        set_local("bufhidden", "hide")
-        set_local("noswapfile")
+        if type is BUFFER_SCRATCH:
+            set_local_option("buftype", "nofile")
+            set_local_option("bufhidden", "hide")
+            set_local_option("noswapfile")
 
-    buf = get_current_buffer()
-    command("close!")
+        buf = get_current_buffer()
     return buf
 
 @preserve_state()

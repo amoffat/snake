@@ -54,25 +54,36 @@ def reverse():
 Use a function for an abbreviation
 ----------------------------------
 
+A Python function can be expanded dynamically as you type an abbreviation in
+insert mode.
+
 ```python
 from snake import *
-from os import getcwd
+import time
 
-abbrev("cwd", getcwd)
+abbrev("curtime", time.ctime)
 ```
 
 Have a function run for a file type
 -----------------------------------
 
+Sometimes it is convenient to run some code when the buffer you open is of a
+specific file type.  You can see your current file type in Vim by typing `:set
+filetype?`
+
 ```python
 from snake import *
 
 @when_buffer_is("python")
-def setup_python_folding(buf):
-    buf.set_option("foldmethod", "indent")
-    buf.set_option("foldnestmax", 2)
-    buf.key_map("<space>", "za")
+def setup_python_folding(ctx):
+    ctx.set_option("foldmethod", "indent")
+    ctx.set_option("foldnestmax", 2)
+    ctx.key_map("<space>", "za")
 ```
+
+A context object is passed into the function you wrap.  This context allows you
+to set options, let variables, and create abbreviations and keymaps that apply
+only to the buffer you just opened, not globally.
 
 How do I get it?
 ================
@@ -109,7 +120,7 @@ def get_word():
     return get_register("0")
 ```
 
-Now instead of your plugin containing `execute normal! yiw`, it can contain
+Now instead of your plugin containing `execute "normal! yiw"`, it can contain
 `word = get_word()`
 
 
@@ -148,7 +159,7 @@ multi_set_option(
     "expandtab",
 )
 
-set_global("mapleader", ",")
+let("mapleader", ",")
 
 ...
 ```
@@ -212,7 +223,16 @@ but I don't have a better one at the moment.  Just be careful with your modules.
 Contributing
 ============
 
-Read [development.md](docs/development.md) for development info.
+Read [development.md](docs/development.md) for technical info.
+
+Pull requests
+-------------
+
+Although Snake is meant to make Vim more scriptable in Python, it is *not* meant
+to provide all the nuanced functionality of Vim.  PRs for new features will be
+screened by the value-add of the feature weighed against the complexity added to
+the api, with favor towards keeping the api simple.
+
 
 Snake needs a vundle equivalent
 -------------------------------
@@ -228,18 +248,3 @@ something_awesome = __import__("snake.plugins.tpope/something_awesome")
 Where the import hook checks if the plugin exists in `~/.vim/snake`, and if it
 doesn't, looks for a repo to clone at
 `https://github.com/tpope/something_awesome`
-
-Automated Testing
------------------
-
-Please create tests for any new features.  Take a look at `tests.py` to see how
-the existing tests work.  Basically vim is started in a headless mode and you
-can feed an and input file and a script.  The script can communicate to the
-test.  The final changed file is also available to the test.
-
-More functions
---------------
-
-Common actions, like `get_word()` already have functions, but there are plenty
-more common actions that I haven't thought of yet.  Please write functions and
-tests for them!

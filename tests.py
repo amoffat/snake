@@ -4,7 +4,7 @@ import tempfile
 import sys
 import unittest
 import sh
-import json
+import pickle
 import codecs
 import re
 
@@ -42,7 +42,7 @@ import snake
 """.format(SNAKE_DIR=SNAKE_DIR))
 
 
-def run_vim(script, input_str=None, vimrc=VIMRC.name):
+def run_vim(script, input_str=None, vimrc=VIMRC.name, commands=None):
     # we can't use a real fifo because it will block on opening, because one
     # side will wait for the other side to open before unblocking
     fifo = tempfile.NamedTemporaryFile(delete=True)
@@ -50,27 +50,27 @@ def run_vim(script, input_str=None, vimrc=VIMRC.name):
     # we do some super ugly stuff and wrap our script in some helpers, namely a
     # helper to send output from our snake script to our test
     script = """python << EOF
-import json
+import pickle
 from snake import *
-output = open("{fifo_filename}", "w")
 def send(stuff):
-    output.write(json.dumps(stuff))
-    output.flush()
+    with open("{fifo_filename}", "w") as output:
+        pickle.dump(stuff, output)
 {script}
-output.close()
 EOF
     """.format(script=script, fifo_filename=fifo.name)
     script_file = create_tmp_file(script)
     input_file = create_tmp_file(input_str or "")
-    commands = []
 
     # use our custom vimrc, use binary mode (dont add newlines automatically),
     # and load script_file as our script to run
     args = ["-N", "-n", "-i", "NONE", "-u", vimrc, "-S", script_file.name, "-b"]
 
     #commands.append("exec 'silent !echo '. errmsg")
-    # force quit after our script runs
-    commands.append("wq!")
+
+    # sometimes we need to specify our own commands, but most times not
+    if commands is None:
+        # save and exit
+        commands = ["wqa!"]
 
     for command in commands:
         args.extend(["-c", command])
@@ -83,9 +83,9 @@ EOF
     input_file.seek(0)
     changed = input_file.read().decode("utf8")
 
-    sent_data = fifo.read().decode("utf8")
+    sent_data = fifo.read()
     if sent_data:
-        output = json.loads(sent_data)
+        output = pickle.loads(sent_data)
     else:
         output = None
     return changed, output
@@ -217,7 +217,7 @@ pos2 = get_cursor_position()
 send([(word1, pos1), (word2, pos2)])
 """
         _, output = run_vim(script, self.sample_block)
-        self.assertEqual(output, [["Mary", [1, 6]], ["Mary", [5, 6]]])
+        self.assertEqual(output, [("Mary", (1, 6)), ("Mary", (5, 6))])
 
 
     def test_filetype(self):
@@ -240,6 +240,14 @@ send([count1, count2, count3])
         self.assertEqual(output, [0, 0, 1])
 
 
+    def test_current_file(self):
+        script = r"""
+send(get_current_file())
+"""
+        _, output = run_vim(script)
+        self.assertEqual(tempfile.gettempdir(), dirname(output))
+
+
 class VisualTests(VimTests):
     def test_cursor_position(self):
         script = r"""
@@ -254,7 +262,7 @@ data.append(get_cursor_position())
 send(data)
 """
         changed, output = run_vim(script, self.sample_block)
-        self.assertEqual(output, [[1,1], [2,3]])
+        self.assertEqual(output, [(1,1), (2,3)])
 
 
     def test_cursor_set_pos(self):
@@ -350,6 +358,26 @@ keys("Wviwa")
 
 
 
+class OptionsTests(VimTests):
+    def test_get_set_value(self):
+        script = r"""
+o1 = int(get_option("tw"))
+set_option("tw", 80)
+o2 = int(get_option("tw"))
+send([o1, o2])
+"""
+        _, output = run_vim(script)
+        self.assertEqual(output, [0, 80])
+
+    def test_get_set_flag(self):
+        script = r"""
+o1 = int(get_option("tw"))
+set_option("tw", 80)
+o2 = int(get_option("tw"))
+send([o1, o2])
+"""
+        _, output = run_vim(script)
+        self.assertEqual(output, [0, 80])
 
 
 class VariableTests(VimTests):
@@ -461,3 +489,57 @@ send(data)
         self.assertEqual(output["not_preserved_a"], "123")
         self.assertEqual(output["preserved_b"], "i'll be preserved tho")
 
+
+
+class BufferTests(VimTests):
+    def test_new_buffer(self):
+        script = r"""
+buf1 = get_current_buffer()
+num1 = get_num_buffers()
+n = new_buffer("test")
+buf2 = get_current_buffer()
+num2 = get_num_buffers()
+set_buffer(n)
+buf3 = get_current_buffer()
+send([buf1, num1, buf2, num2, buf3])
+"""
+        changed, output = run_vim(script, self.sample_text, commands=["qa!"])
+        self.assertEqual(output, [1, 1, 1, 2, 2])
+
+    def test_get_buffers(self):
+        script = r"""
+new_buffer("test1")
+new_buffer("test2")
+send(get_buffers())
+"""
+        changed, output = run_vim(script, self.sample_text, commands=["qa!"])
+        del output[1]["name"]
+        self.assertDictEqual(output, {
+            1: {'flags': {'active': True,
+                'alternate': False,
+                'current': True,
+                'errors': False,
+                'hidden': False,
+                'modified': False,
+                'readonly': False,
+                'unlisted': False},
+                },
+            2: {'flags': {'active': False,
+                'alternate': False,
+                'current': False,
+                'errors': False,
+                'hidden': True,
+                'modified': False,
+                'readonly': False,
+                'unlisted': False},
+                'name': 'test1'},
+            3: {'flags': {'active': False,
+                'alternate': True,
+                'current': False,
+                'errors': False,
+                'hidden': True,
+                'modified': False,
+                'readonly': False,
+                'unlisted': False},
+                'name': 'test2'}
+        })
