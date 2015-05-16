@@ -76,7 +76,9 @@ EOF
         args.extend(["-c", command])
     args.append(input_file.name)
 
-    p = sh.vim(*args, _tty_in=True)
+    env = os.environ.copy()
+    env["LOAD_VIMPY"] = "0"
+    p = sh.vim(*args, _tty_in=True, _env=env)
     #err = clean_output(p.stdout.decode("ascii"))
     output = p.stdout
 

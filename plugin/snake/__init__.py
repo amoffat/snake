@@ -5,6 +5,7 @@ import os
 import sys
 from os.path import expanduser, exists, abspath, join, dirname
 import time
+import inspect
 import re
 
 __version__ = "0.1"
@@ -48,12 +49,27 @@ def dispatch_mapped_function(key):
     try:
         fn = _mapped_functions[key]
     except KeyError:
-        raise Exception("unable to find mapped function")
+        raise Exception("unable to find mapped function with id() == %s" % key)
     else:
         return fn()
 
-def generate_autocommand_name(fn):
-    return fn.__name__ + ":" + str(id(fn))
+def _generate_autocommand_name(fn):
+    """ takes a function and returns a name that is unique to the function and
+    where it was defined.  the name must be reproducible between startup calls
+    because its for an auto command group, and we must clear the old group out
+    when reloading
+    
+    http://learnvimscriptthehardway.stevelosh.com/chapters/14.html#clearing-groups
+    """
+    src = None
+    try:
+        src = inspect.getsourcefile(fn)
+    except TypeError:
+        pass
+
+    if not src:
+        src = "."
+    return src + ":" + fn.__name__
 
 def register_fn(fn):
     """ takes a function and returns a string handle that we can use to call the
@@ -619,7 +635,7 @@ def when_buffer_is(filetype):
     python buffer that you just opened """
 
     def wrapped(fn):
-        au_name = generate_autocommand_name(fn)
+        au_name = _generate_autocommand_name(fn)
         command("augroup %s" % au_name)
         command("autocmd!")
         ctx = AutoCommandContext()
