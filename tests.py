@@ -33,6 +33,7 @@ def clean_output(output):
     return re.sub(r'\x1b[^m]*m', '', output)
 
 VIMRC = create_tmp_file(r"""
+let mapleader = ","
 python << EOF
 import sys
 from os.path import expanduser
@@ -127,6 +128,16 @@ send(over)
         changed, output = run_vim(script, self.sample_text)
         self.assertEqual(output, "over")
 
+
+    def test_delete_word(self):
+        script = r"""
+keys("^5w")
+delete_word()
+"""
+        changed, output = run_vim(script, self.sample_text)
+        self.assertEqual(changed, "The quick brown fox jumps  the lazy dog")
+
+
     def test_set_buffer_contents(self):
         script = r"""
 buf = get_current_buffer()
@@ -158,6 +169,75 @@ keys("iabc\<C-]> abc\<C-]>")
 """
         changed, output = run_vim(script)
         self.assertEqual(changed, "1 2\n")
+
+
+    def test_num_lines(self):
+        script = r"""
+send(get_num_lines())
+"""
+        _, output = run_vim(script, self.sample_block)
+        self.assertEqual(output, 8)
+
+    def test_last_line(self):
+        script = r"""
+keys("gg")
+test1 = is_last_line()
+keys("G")
+test2 = is_last_line()
+send([test1, test2])
+"""
+        _, output = run_vim(script, self.sample_block)
+        self.assertFalse(output[0])
+        self.assertTrue(output[1])
+
+    def test_preserve_cursor(self):
+        script = r"""
+keys("gg^w")
+with preserve_cursor():
+    keys("jj^w")
+    word1 = get_word()
+
+word2 = get_word()
+send([word1, word2])
+"""
+        _, output = run_vim(script, self.sample_block)
+        self.assertEqual(output[0], "art")
+        self.assertEqual(output[1], "Mary")
+
+    def test_search(self):
+        script = r"""
+search("Mary")
+word1 = get_word()
+pos1 = get_cursor_position()
+
+search("Mary")
+word2 = get_word()
+pos2 = get_cursor_position()
+
+send([(word1, pos1), (word2, pos2)])
+"""
+        _, output = run_vim(script, self.sample_block)
+        self.assertEqual(output, [["Mary", [1, 6]], ["Mary", [5, 6]]])
+
+
+    def test_filetype(self):
+        script = r"""
+called = 0
+@when_buffer_is("text")
+def hooks(ctx):
+    global called
+    called += 1
+
+count1 = called
+set_option("filetype", "python")
+count2 = called
+set_option("filetype", "text")
+count3 = called
+
+send([count1, count2, count3])
+"""
+        _, output = run_vim(script, self.sample_text)
+        self.assertEqual(output, [0, 0, 1])
 
 
 class VisualTests(VimTests):
@@ -259,12 +339,54 @@ send(called)
         script = r"""
 def process(stuff):
     send(stuff)
+    return "really fast"
 
 visual_key_map("a", process)
-keys("Wviewa")
+keys("Wviwa")
 """
         changed, output = run_vim(script, self.sample_text)
-        import pdb; pdb.set_trace() 
+        self.assertEqual(output, "quick")
+        self.assertEqual(changed, "The really fast brown fox jumps over the lazy dog")
+
+
+
+
+
+class VariableTests(VimTests):
+    def test_let(self):
+        script = r"""
+var_name = "some_var"
+orig = get(var_name)
+let(var_name, "testing")
+new = get(var_name)
+send({
+    "original": orig,
+    "new": new,
+})
+"""
+        _, output = run_vim(script)
+        self.assertEqual(output["original"], None)
+        self.assertEqual(output["new"], "testing")
+
+
+    def test_multi_let(self):
+        script = r"""
+multi_let(
+    "test",
+    a="1",
+    b="2",
+    c="3"
+)
+send({
+    "a": get("a", "test"),
+    "b": get("b", "test"),
+    "c": get("c", "test"),
+})
+"""
+        _, output = run_vim(script)
+        self.assertEqual(output["a"], "1")
+        self.assertEqual(output["b"], "2")
+        self.assertEqual(output["c"], "3")
 
 
 class RegisterTests(VimTests):
@@ -338,3 +460,4 @@ send(data)
         self.assertEqual(output["preserved_a"], None)
         self.assertEqual(output["not_preserved_a"], "123")
         self.assertEqual(output["preserved_b"], "i'll be preserved tho")
+

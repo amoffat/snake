@@ -1,11 +1,11 @@
 import vim
-import inspect
 from contextlib import contextmanager 
 from functools import wraps, partial
 import os
 import sys
 from os.path import expanduser, exists, abspath, join, dirname
 import time
+import re
 
 command = vim.command
 
@@ -20,7 +20,8 @@ BUFFER_SCRATCH = 0
 NS_GLOBAL = "g"
 NS_BUFFER = "b"
 
-mapped_functions = {
+_LEADER_REGEX = re.compile(r"\\<leader>", re.I)
+_mapped_functions = {
 }
 
 def dispatch_mapped_function(key):
@@ -29,20 +30,20 @@ def dispatch_mapped_function(key):
     anonymous, callable on key press", we have a single dispatch function to do
     that work for vim """
     try:
-        fn = mapped_functions[key]
+        fn = _mapped_functions[key]
     except KeyError:
         raise Exception("unable to find mapped function")
     else:
         return fn()
 
 def generate_autocommand_name(fn):
-    return inspect.getsourcefile(fn) + ":" + fn.__name__
+    return fn.__name__ + ":" + str(id(fn))
 
 def register_fn(fn):
     """ takes a function and returns a string handle that we can use to call the
     function via the "python" command in vimscript """
     fn_key = id(fn)
-    mapped_functions[fn_key] = fn
+    _mapped_functions[fn_key] = fn
     return "snake.dispatch_mapped_function(%s)" % fn_key
 
 @contextmanager
@@ -200,39 +201,39 @@ def multi_let(namespace, **name_values):
     .vimrc.py, all related to a plugin.  the first argument is a namespace to be
     appended to the front of each name/value pair. """
     for name, value in name_values.items():
-        name = namespace + "_" + name
-        let(name, value)
+        let(name, value, namespace=namespace)
 
 def _serialize_obj(obj):
     if isinstance(obj, basestring):
         obj = "'%s'" % escape_string_sq(obj)
-    elif isinstance(obj, dict):
-        obj = str(obj)
+    # TODO allow other kinds of serializations?
     return obj
 
-def let_variable(name, value, namespace=None, scope=NS_GLOBAL):
+def _compose_let_name(name, namespace, scope):
+    if namespace:
+        name = namespace + "_" + name
+    return "%s:%s" % (scope, name)
+
+
+def let(name, value, namespace=None, scope=NS_GLOBAL):
     value = _serialize_obj(value)
-    if namespace:
-        name = namespace + "_" + name
-    return command("let %s:%s=%s" % (scope, name, value))
+    name = _compose_let_name(name, namespace, scope)
+    return command("let %s=%s" % (name, value))
 
-def let(name, value, namespace=None):
-    return let_variable(name, value, namespace, NS_GLOBAL)
+let_buffer_local = partial(let, scope=NS_BUFFER)
 
-def let_buffer_local(name, value, namespace=None):
-    return let_variable(name, value, namespace, NS_BUFFER)
-
-def get_global(name, namespace=None):
-    if namespace:
-        name = namespace + "_" + name
+def get(name, namespace=None, scope=NS_GLOBAL):
     try:
-        val = vim.eval("g:%s" % name)
+        val = vim.eval(_compose_let_name(name, namespace, scope))
     except vim.error as e:
         if "Vim:E121" in e.message:
             val = None
         else:
             raise
     return val
+
+get_buffer_local = partial(get, scope=NS_BUFFER)
+
 
 def to_top():
     keys("gg")
@@ -270,12 +271,18 @@ def search(s, wrap=True, backwards=False, move=True):
 
     return pos
 
+def get_leader():
+    return vim.eval("mapleader")
 
-def keys(k, mappings=False):
+def keys(k, keymaps=True):
     """ feeds keys into vim as if you pressed them """
+
     k = escape_string_dq(k)
     cmd = "normal"
-    if mappings:
+    if keymaps:
+        # vim does not expand "\<leader>" in execute normal 
+        k = _LEADER_REGEX.sub(get_leader(), k)
+    else:
         cmd += "!"
     command('execute "%s %s"' % (cmd, k))
 
@@ -353,7 +360,6 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
             old_fn = fn
             @wraps(fn)
             def wrapped():
-                set_normal_mode()
                 sel = get_visual_selection()
                 rep = old_fn(sel)
                 if rep is not None:
@@ -484,7 +490,7 @@ def replace_visual_selection(rep):
     with preserve_registers("a"):
         set_register("a", rep)
         keys("gvd")
-        if is_last_line():
+        if is_last_line() and False:
             keys('"ap')
         else:
             keys('"aP')

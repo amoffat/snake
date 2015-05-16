@@ -27,6 +27,9 @@ def toggle_snake_case_camel_case():
         replace_word(snake_case)
 ```
 
+Pressing "<leader>c" in vim will take the current variable name and turn it into
+camel-case if it's snake-cased, or snake-cased if it's camel-cased!
+
 ![Metal Gear Solid Snake Success](http://i.imgur.com/ZFr3vXG.gif)
 
 Why do you want this?
@@ -226,16 +229,17 @@ Where the import hook checks if the plugin exists in `~/.vim/snake`, and if it
 doesn't, looks for a repo to clone at
 `https://github.com/tpope/something_awesome`
 
-Automated testing
+Automated Testing
 -----------------
 
-There is no testing right now.  I'm not totally sure how to do it, but it might
-involve running vim in a subprocess in some kind of headless mode, applying
-snake functions, then checking the output of the vim buffer for correctness.
+Please create tests for any new features.  Take a look at `tests.py` to see how
+the existing tests work.  Basically vim is started in a headless mode and you
+can feed an and input file and a script.  The script can communicate to the
+test.  The final changed file is also available to the test.
 
 More functions
 --------------
 
 Common actions, like `get_word()` already have functions, but there are plenty
-more common actions that I haven't thought of yet.  Please write functions for
-them!
+more common actions that I haven't thought of yet.  Please write functions and
+tests for them!
