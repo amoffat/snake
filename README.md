@@ -85,6 +85,19 @@ A context object is passed into the function you wrap.  This context allows you
 to set options, let variables, and create abbreviations and keymaps that apply
 only to the buffer you just opened, not globally.
 
+Press arbitrary keys as if you typed them
+-----------------------------------------
+
+```python
+from snake import *
+
+def uppercase_second_word():
+    keys("gg") # go to top of file, first character
+    keys("w") # next word
+    keys("viw") # select inner word
+    keys("~") # uppercase it
+```
+
 How do I get it?
 ================
 
