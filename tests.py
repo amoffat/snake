@@ -548,4 +548,5 @@ send(get_buffers())
 
 
 if __name__ == "__main__":
-    unittest.main()
+    print(sh.vim(version=True))
+    unittest.main(verbosity=2)
