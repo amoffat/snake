@@ -1,6 +1,9 @@
 Snake (SNAAAAAAAAKKKE)
 ======================
 
+[![Build
+Status](https://travis-ci.org/amoffat/snake.svg?branch=master)](https://travis-ci.org/amoffat/snake)
+
 Snake lets you use Python to its fullest extent to write vim plugins:
 
 ```python
