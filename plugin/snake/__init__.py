@@ -259,7 +259,7 @@ def get(name, namespace=None, scope=NS_GLOBAL):
     try:
         val = vim.eval(_compose_let_name(name, namespace, scope))
     except vim.error as e:
-        if "Vim:E121" in e.message or e.message == "invalid expression"
+        if "Vim:E121" in e.message or e.message == "invalid expression":
             val = None
         else:
             raise
