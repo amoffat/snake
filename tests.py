@@ -545,3 +545,7 @@ send(get_buffers())
                 'unlisted': False},
                 'name': 'test2'}
         })
+
+
+if __name__ == "__main__":
+    unittest.main()

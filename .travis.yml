@@ -10,7 +10,7 @@ before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -qq vim
 
-before_script: pip install sh nose
+before_script: pip install sh
 
 script:
-    - nosetests --nologcapture --nocapture tests.py
+    - python tests.py
