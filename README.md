@@ -68,8 +68,7 @@ Have a function run for a file type
 -----------------------------------
 
 Sometimes it is convenient to run some code when the buffer you open is of a
-specific file type.  You can see your current file type in Vim by typing `:set
-filetype?`
+specific file type.
 
 ```python
 from snake import *
@@ -118,10 +117,10 @@ TODO
 Where do I write my Snake code?
 ===============================
 
-`.vimrc.py` is intended to be the python equivalent of `.vimrc`.  It should
-contain all of your Snake code, and Snake will autoload it on startup.  If you
-were so inclined, you could move all of your vim settings and options into
-`.vimrc.py` as well:
+`.vimrc.py` is intended to be the python equivalent of `.vimrc`.  Snake.vim will
+load it on startup.  It should contain all of your Snake initialization code and
+do any imports of other Snake plugins.  If were so inclined, you could move all
+of your vim settings and options into `.vimrc.py` as well:
 
 ```python
 from snake import *
@@ -146,7 +145,8 @@ multi_command(
     "nohlsearch",
     "syntax on",
 )
-...
+
+from snake.plugins import my_rad_plugin
 ```
 
 Design Philosophy
@@ -187,7 +187,7 @@ For plugin API reference, check out [api_reference.md](docs/api_reference.md).
 Can I use a virtualenv for my plugin?
 =====================================
 
-Yes!
+Yes!  But it's crazy!
 
 Just include a `requirements.txt` file in your package directory that contains
 the `pip freeze` output of all the dependencies you wish to include.  When your
