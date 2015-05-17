@@ -27,6 +27,7 @@ except ImportError:
 # that require them
 WORKON_HOME = os.environ.get("WORKON_HOME", "~/.virtualenvs")
 VENV_BASE_DIR = abspath(expanduser(WORKON_HOME))
+BUNDLE_DIR = abspath(expanduser("~/.vim/bundle"))
 
 
 def venv_exists(plugin_name):
@@ -56,6 +57,8 @@ class SnakePluginHook(object):
 
     if "requirements.txt" exists in the directory where the "something" module
     lives, they will be installed to the virtualenv for "something"
+
+    https://www.python.org/dev/peps/pep-0302/
     """
 
     def __init__(self, plugin_paths):
@@ -72,6 +75,10 @@ class SnakePluginHook(object):
                 loader = self
 
             # it's a plugin
+            # notice we're checking for an exact match of 3 parts.  like
+            # "snake.plugins.something".  if "something" is a package, we only
+            # want to use our plugin hook for that top level module.  any
+            # relative imports should be handled by the vanilla plugin system
             elif len(self.parts) == 3:
                 # try to see if it actually is a snake plugin by searching the
                 # plugin paths.  if we can't find it, we'll just end up
@@ -84,7 +91,6 @@ class SnakePluginHook(object):
                 else:
                     loader = self
 
-        #print fullname, loader
         return loader
 
     def load_module(self, fullname):
@@ -92,6 +98,7 @@ class SnakePluginHook(object):
 
         # we haven't loaded it, so let's figure out what we're loading
         if fullname.startswith("snake.plugins"):
+
             # its our initial snake_plugins dummy module
             if len(self.parts) == 2:
                 mod = imp.new_module(self.parts[0])
@@ -109,45 +116,50 @@ class SnakePluginHook(object):
                         self.plugin_paths)
 
                 is_package = desc[-1] == imp.PKG_DIRECTORY
+
+                # the module is a package, therefore there might be a
+                # requirements file, and if there's a reqs file, there's a
+                # virtualenv that we need to activate
                 if is_package:
-                    plugin_dir = pathname
-                else:
-                    plugin_dir = dirname(pathname)
+                    venv_name = venv_name_from_module_name(plugin_name)
+                    reqs = join(pathname, "requirements.txt")
 
-                venv_name = venv_name_from_module_name(plugin_name)
-                reqs = join(plugin_dir, "requirements.txt")
+                    needs_venv = not venv_exists(venv_name) and exists(reqs)
+                    can_make_venv = virtualenv is not None and pip is not None
 
-                needs_venv = not venv_exists(venv_name) and exists(reqs)
-                can_make_venv = virtualenv is not None and pip is not None
-
-                # no virtualenv for this plugin?  but we have a requirements
-                # file?  create one and install all of the requirements
-                if needs_venv:
-                    if can_make_venv:
-                        venv_dir = new_venv(venv_name)
-                        pip_install(reqs, find_site_packages(venv_dir))
-                    else:
-                        raise Exception("Plugin %s requires a virtualenv. \
+                    # no virtualenv for this plugin?  but we have a requirements
+                    # file?  create one and install all of the requirements
+                    if needs_venv:
+                        if can_make_venv:
+                            venv_dir = new_venv(venv_name)
+                            pip_install(reqs, find_site_packages(venv_dir))
+                        else:
+                            raise Exception("Plugin %s requires a virtualenv. \
 Please install virtualenv and pip so that one can be created." % plugin_name)
 
-                # we must have had requirements, because we've created a
-                # virtualenv.  go ahead and evaluate our module inside our new
-                # venv
-                if venv_exists(venv_name):
-                    with in_virtualenv(venv_name):
+                    # we must have had requirements, because we've created a
+                    # virtualenv.  go ahead and evaluate our module inside our new
+                    # venv
+                    if venv_exists(venv_name):
+                        with in_virtualenv(venv_name):
+                            mod = imp.load_module(fullname, h, pathname, desc)
+
+                    else:
                         mod = imp.load_module(fullname, h, pathname, desc)
 
+                # we're not a package, there is no virtualenv, so load the
+                # module as regular
                 else:
                     mod = imp.load_module(fullname, h, pathname, desc)
 
                 mod.__loader__ = self
-                mod.__package__ = "snake.plugins"
+                mod.__package__ = fullname
             sys.modules[fullname] = mod
 
         return mod
 
 
-_snake_plugin_paths = snake.get_runtime_path()
+_snake_plugin_paths = [BUNDLE_DIR]
 sys.meta_path = [SnakePluginHook(_snake_plugin_paths)]
 
 
