@@ -103,11 +103,13 @@ How do I get it?
 Vundle
 ------
 
-Add the following line to your Vundle plugin block:
+Add the following line to your Vundle plugin block of your `.vimrc`:
 
 ```
 Plugin 'amoffat/snake'
 ```
+
+Re-source your `.vimrc`.  Then `:PluginInstall`
 
 Pathogen
 --------
