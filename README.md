@@ -238,8 +238,22 @@ plugin was being imported inside its virtualenv.  In the second example, when
 `stuff()` runs, it is no longer inside of your plugin's virtualenv, so when it
 imports `requests`, it will not get the correct module or any module at all.
 
-All of this obviously isn't great, and I'm not super pleased with the solution,
-but I don't have a better one at the moment.  Just be careful with your modules.
+There is also the problem of different plugins having different dependency
+versions.  For example, if Snake plugin `A` depends on `sh==1.10` and plugin `B`
+depends on `sh==1.11`, whichever plugin gets loaded first in `.vimrc.py` will
+put *their* `sh` module into `sys.modules`.  Then, when the other plugin loads,
+it will attempt to load `sh`, see it is in `sys.modules`, and use that instead,
+instead of looking in its virtualenv.
+
+All of this obviously isn't great, and something better needs to be built to
+more thoroughly separate virtualenvs from under a single Python process.  I
+think what can happen is, for the `SnakePluginHook`, if a `fullname` has more
+than 3 paths, drop into the virtualenv for the plugin and run `imp.find_module`.
+If the module exists, return `self` as the loader.  Repeat the process in
+`load_module` except actually `imp.load_module`.  This way, the dependency
+should be loaded into `sys.modules` prefixed by the full plugin name
+`snake.plugins.whatever.sh`.
+
 
 Contributing
 ============
