@@ -173,10 +173,12 @@ Now instead of your plugin containing `execute "normal! yiw"`, it can contain
 How do I write a plugin?
 ========================
 
-* Add a directory in your vim runtime path.  For many of you, this will be
-  `~/.vim/bundle`
-* In your plugin directory, create a python file or package named your plugin
-  name.  Do not turn your plugin folder into a package with an `__init__.py`
+* Create a directory in your vim runtime path.  For many of you, this directory
+  will be `~/.vim/bundle`.  The directory you create should be the name of your
+  plugin.
+* Inside this new plugin directory, create a python file or package (meaning, a
+  new directory) named your plugin name.  *Do not* turn your plugin directory
+  into a package itself by adding an `__init__.py`.  It won't go well.
 * Add `from snake.plugins import <your_package>` to `~/.vimrc.py`
 * Re-source your `~/.vimrc`
 
