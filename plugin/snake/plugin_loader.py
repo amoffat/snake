@@ -131,7 +131,11 @@ class SnakePluginHook(object):
                     # file?  create one and install all of the requirements
                     if needs_venv:
                         if can_make_venv:
+                            print("Creating virtual environment %s for Snake \
+plugin %s..." % (venv_name, plugin_name))
                             venv_dir = new_venv(venv_name)
+                            print("Installing requirements for plugin %s..." %
+                                    plugin_name)
                             pip_install(reqs, find_site_packages(venv_dir))
                         else:
                             raise Exception("Plugin %s requires a virtualenv. \
@@ -143,6 +147,7 @@ Please install virtualenv and pip so that one can be created." % plugin_name)
                     if venv_exists(venv_name):
                         with in_virtualenv(venv_name):
                             mod = imp.load_module(fullname, h, pathname, desc)
+                            mod.__virtualenv__ = venv_name
 
                     else:
                         mod = imp.load_module(fullname, h, pathname, desc)
