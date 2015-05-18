@@ -1,5 +1,4 @@
-Snake (SNAAAAAAAAKKKE)
-======================
+# Snake (SNAAAAAAAAKKKE)
 
 [![Build
 Status](https://travis-ci.org/amoffat/snake.svg?branch=master)](https://travis-ci.org/amoffat/snake)
@@ -35,16 +34,14 @@ current word!
 
 ![Metal Gear Solid Snake Success](http://i.imgur.com/ZFr3vXG.gif)
 
-[API Reference](docs/api_reference.md).
+## [API Reference](docs/api_reference.md)
 
-Why do you want this?
-=====================
+# Why do you want this?
 
 Vim is great, but vimscript is painful as a programming language.  Let's use
 Python instead.  Here's some cool things you can do:
 
-Bind a function to a key
-------------------------
+## Bind a function to a key
 
 ```python
 from snake import *
@@ -56,8 +53,7 @@ def reverse():
     replace_word("".join(word))
 ```
 
-Use a function for an abbreviation
-----------------------------------
+## Use a function for an abbreviation
 
 A Python function can be expanded dynamically as you type an abbreviation in
 insert mode.
@@ -69,8 +65,7 @@ import time
 abbrev("curtime", time.ctime)
 ```
 
-Have a function run for a file type
------------------------------------
+## Have a function run for a file type
 
 Sometimes it is convenient to run some code when the buffer you open is of a
 specific file type.
@@ -89,8 +84,7 @@ A context object is passed into the function you wrap.  This context allows you
 to set options, let variables, and create abbreviations and keymaps that apply
 only to the buffer you just opened, not globally.
 
-Press arbitrary keys as if you typed them
------------------------------------------
+## Press arbitrary keys as if you typed them
 
 ```python
 from snake import *
@@ -102,11 +96,9 @@ def uppercase_second_word():
     keys("~") # uppercase it
 ```
 
-How do I get it?
-================
+# How do I get it?
 
-Vundle
-------
+## Vundle
 
 Add the following line to your Vundle plugin block of your `.vimrc`:
 
@@ -116,13 +108,11 @@ Plugin 'amoffat/snake'
 
 Re-source your `.vimrc`.  Then `:PluginInstall`
 
-Pathogen
---------
+## Pathogen
 
 TODO
 
-Where do I write my Snake code?
-===============================
+# Where do I write my Snake code?
 
 `.vimrc.py` is intended to be the python equivalent of `.vimrc`.  Snake.vim will
 load it on startup.  It should contain all of your Snake initialization code and
@@ -156,8 +146,7 @@ multi_command(
 from snake.plugins import my_rad_plugin
 ```
 
-Design Philosophy
-=================
+# Design Philosophy
 
 Vim is powerful, but its commands and key-bindings are built for seemingly every
 use case imaginable.  It doesn't distinguish between commonly-used and
@@ -177,8 +166,7 @@ Now instead of your plugin containing `execute "normal! yiw"`, it can contain
 `word = get_word()`
 
 
-How do I write a plugin?
-========================
+# How do I write a plugin?
 
 If your plugin is a package, create (or symlink) a directory inside
 `~/.vim/bundle` for your plugin.  Make this directory a Python package by
@@ -192,8 +180,7 @@ Re-source your `~/.vimrc`
 
 For plugin API reference, check out [api\_reference.md](docs/api_reference.md).
 
-Can I use a virtualenv for my plugin?
-=====================================
+# Can I use a virtualenv for my plugin?
 
 Yes!  But it's crazy!
 
@@ -207,8 +194,7 @@ Virtualenvs that are created automatically will use your virtualenv\_wrapper
 `WORKON_HOME` environment variable, if one exists, otherwise `~/.virtualenvs`.
 And virtualenvs take the name `snake_plugin_<your_plugin_name>`.
 
-Gotchas
--------
+## Gotchas
 
 You may be wondering how snake can allow for different virtualenvs for different
 plugins within a single Python process.  There's a little magic going on, and as
@@ -262,13 +248,11 @@ should be loaded into `sys.modules` prefixed by the full plugin name
 `snake.plugins.whatever.sh`.
 
 
-Contributing
-============
+# Contributing
 
 Read [development.md](docs/development.md) for technical info.
 
-Pull requests
--------------
+## Pull requests
 
 Although Snake is meant to make Vim more scriptable in Python, it is *not* meant
 to provide all the nuanced functionality of Vim.  PRs for new features will be
@@ -276,8 +260,7 @@ screened by the value-add of the feature weighed against the complexity added to
 the api, with favor towards keeping the api simple.
 
 
-Snake needs a vundle equivalent
--------------------------------
+## Snake needs a vundle equivalent
 
 I would like to see an import hook that allows this in your `.vimrc.py`:
 
