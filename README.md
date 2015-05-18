@@ -110,6 +110,16 @@ Re-source your `.vimrc`.  Then `:PluginInstall`
 
 TODO
 
+## Neobundle
+
+Add the following line to your Neobundle plugin block of your `.vimrc`:
+
+```
+Neobundle 'amoffat/snake'
+```
+
+Re-source your `.vimrc`. Then `NeoBundleInstall`
+
 # Where do I write my Snake code?
 
 `.vimrc.py` is intended to be the python equivalent of `.vimrc`.  Snake.vim will
