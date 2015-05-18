@@ -48,9 +48,7 @@ from snake import *
 
 @key_map("<leader>r")
 def reverse():
-    word = list(get_word())
-    word.reverse()
-    replace_word("".join(word))
+    replace_word(get_word()[::-1])
 ```
 
 ## Use a function for an abbreviation
