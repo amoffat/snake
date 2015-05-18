@@ -35,6 +35,8 @@ current word!
 
 ![Metal Gear Solid Snake Success](http://i.imgur.com/ZFr3vXG.gif)
 
+[API Reference](docs/api_reference.md).
+
 Why do you want this?
 =====================
 
