@@ -307,7 +307,13 @@ def keys(k, keymaps=True):
     cmd = "normal"
     if keymaps:
         # vim does not expand "\<leader>" in execute normal 
-        k = _LEADER_REGEX.sub(get_leader(), k)
+        # here we check explicitly for for the word leader in keys, before
+        # attempting to run get_leader(), the reason is because on some versions
+        # of vim, vim.eval will print an "invalid expression" error if a
+        # variable is undefined, and that will look terrible for scripts that
+        # press keys if a user's leader is undefined
+        if "leader" in k.lower():
+            k = _LEADER_REGEX.sub(get_leader() or "", k)
     else:
         cmd += "!"
     command('execute "%s %s"' % (cmd, k))

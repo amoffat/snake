@@ -317,6 +317,17 @@ dog")
 
 
 class KeyMapTests(VimTests):
+    def test_leader(self):
+        script = r"""
+def side_effect():
+    send(True)
+
+key_map("<leader>a", side_effect)
+keys("\<leader>a")
+"""
+        changed, output = run_vim(script)
+        self.assertTrue(output)
+
     def test_key_map_fn(self):
         script = r"""
 called = 0
