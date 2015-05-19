@@ -115,7 +115,7 @@ TODO
 Add the following line to your Neobundle plugin block of your `.vimrc`:
 
 ```
-Neobundle 'amoffat/snake'
+NeoBundle 'amoffat/snake'
 ```
 
 Re-source your `.vimrc`. Then `NeoBundleInstall`
