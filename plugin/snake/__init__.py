@@ -8,7 +8,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.11"
+__version__ = "0.12"
 
 
 NORMAL_MODE = "n"
@@ -334,7 +334,7 @@ def set_register(name, val):
 @preserve_state()
 def get_word():
     """ gets the word under the cursor """
-    keys("yiw")
+    keys('"0yiw')
     return get_register("0")
 
 @preserve_state()
@@ -346,7 +346,7 @@ def delete_word():
 def replace_word(rep):
     """ replaces the word under the cursor with rep """
     set_register("0", rep)
-    keys("viwp")
+    keys('viw"0p')
 
 @preserve_state()
 def get_in_quotes():

@@ -34,6 +34,7 @@ def clean_output(output):
 
 VIMRC = create_tmp_file(r"""
 let mapleader = ","
+set clipboard=unnamed
 python << EOF
 import sys
 from os.path import expanduser
