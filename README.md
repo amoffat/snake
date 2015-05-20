@@ -3,7 +3,7 @@
 [![Build
 Status](https://travis-ci.org/amoffat/snake.svg?branch=master)](https://travis-ci.org/amoffat/snake)
 
-Snake enhances [vim’s Python interface](http://vimdoc.sourceforge.net/htmldoc/if_pyth.html#Python) to make it *easy* to write vim plugins:
+Snake lets you use Python to its fullest extent to write Vim plugins:
 
 ```python
 from snake import *
@@ -96,7 +96,7 @@ def uppercase_second_word():
 
 # How do I get it?
 
-(Your Vim version must include [`+python`](http://vimdoc.sourceforge.net/htmldoc/various.html#+python) to use Snake. You can check with `:version`.)
+Your Vim version must include [`+python`](http://vimdoc.sourceforge.net/htmldoc/various.html#+python) to use Snake. You can check with `:version`.
 
 ## Vundle
 
