@@ -8,7 +8,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.12"
+__version__ = "0.13"
 
 
 NORMAL_MODE = "n"
@@ -207,8 +207,12 @@ def preserve_state():
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            with preserve_cursor(), preserve_mode(), preserve_registers():
-                return fn(*args, **kwargs)
+            # python 2.6 doesn't support this syntax:
+            #with preserve_cursor(), preserve_mode(), preserve_registers():
+            with preserve_cursor():
+                with preserve_mode():
+                    with preserve_registers():
+                        return fn(*args, **kwargs)
         return wrapper
     return decorator
 
