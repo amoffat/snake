@@ -1,7 +1,7 @@
 python << EOF
 import sys
-from os.path import expanduser
-sys.path.insert(0, expanduser("~/.vim/bundle/snake/plugin"))
+import vim
+sys.path.insert(0, vim.eval("expand('<sfile>:p:h')"))
 
 if "snake" in sys.modules:
     snake = reload(snake)
