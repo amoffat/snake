@@ -1,5 +1,5 @@
 import vim
-from contextlib import contextmanager 
+from contextlib import contextmanager
 from functools import wraps, partial
 import os
 import sys
@@ -58,7 +58,7 @@ def _generate_autocommand_name(fn):
     where it was defined.  the name must be reproducible between startup calls
     because its for an auto command group, and we must clear the old group out
     when reloading
-    
+
     http://learnvimscriptthehardway.stevelosh.com/chapters/14.html#clearing-groups
     """
     src = None
@@ -156,7 +156,7 @@ def abbrev(word, expansion, local=False):
 
 def expand(stuff):
     return vim.eval("expand('%s')" % escape_string_sq(stuff))
-     
+
 def get_current_dir():
     return dirname(get_current_file())
 
@@ -238,11 +238,13 @@ def multi_let(namespace, **name_values):
     for name, value in name_values.items():
         let(name, value, namespace=namespace)
 
+
 def _serialize_obj(obj):
     if isinstance(obj, basestring):
         obj = "'%s'" % escape_string_sq(obj)
     # TODO allow other kinds of serializations?
     return obj
+
 
 def _compose_let_name(name, namespace, scope):
     if namespace:
@@ -256,7 +258,9 @@ def let(name, value, namespace=None, scope=NS_GLOBAL):
     name = _compose_let_name(name, namespace, scope)
     return command("let %s=%s" % (name, value))
 
+
 let_buffer_local = partial(let, scope=NS_BUFFER)
+
 
 def get(name, namespace=None, scope=NS_GLOBAL):
     """ gets a variable """
@@ -310,7 +314,7 @@ def keys(k, keymaps=True):
     k = escape_string_dq(k)
     cmd = "normal"
     if keymaps:
-        # vim does not expand "\<leader>" in execute normal 
+        # vim does not expand "\<leader>" in execute normal
         # here we check explicitly for for the word leader in keys, before
         # attempting to run get_leader(), the reason is because on some versions
         # of vim, vim.eval will print an "invalid expression" error if a
@@ -489,27 +493,31 @@ def get_option(name):
     value = vim.eval("&%s" % name)
     return value
 
-def set_option(name, value=None, local=False):
-    cmd = "set"
-    if local:
-        cmd = "setlocal"
 
-    if value is not None:
-        command("%s %s=%s" % (cmd, name, value))
+def set_option(name, value=None, local=False):
+    if getattr(value, "is_expression", False):
+        name = "&" + name
+        cmd = "let"
     else:
+        cmd = "setlocal" if local else "set"
+
+    if value is None:
         command("%s %s" % (cmd, name))
+    else:
+        command("%s %s=%s" % (cmd, name, value))
+
 
 def set_option_default(name):
     command("set %s&" % name)
 
+
 def unset_option(name):
     command("set no%s" % name)
 
+
 def set_local_option(name, value=None):
-    if value is not None:
-        command("setlocal %s=%s" % (name, value))
-    else:
-        command("setlocal %s" % name)
+    set_option(name, value, local=True)
+
 
 def _parse_buffer_flags(flags):
     mapping = {
@@ -634,24 +642,48 @@ class AutoCommandContext(object):
         return fn(*args, **kwargs)
 
 
+class VimExpression(object):
+    """ an object that represents a vim expression.
+
+    This object can be use to write vimscript code in a let function
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+
+    @property
+    def is_expression(self):
+        return True
+
+
+def when(event, argument="*"):
+    """A general decorator that wraps autocommands"""
+    def wrapped(fn):
+        ctx = AutoCommandContext()
+        call = register_fn(partial(fn, ctx))
+        command("augroup %s" % _generate_autocommand_name(fn))
+        command("autocmd!")
+        command("autocmd %s %s :python %s" % (event, argument, call))
+        command("augroup END")
+        return fn
+    return wrapped
+
+
 def when_buffer_is(filetype):
     """ a decorator for functions you wish to run when the buffer
     filetype=filetype.  your function will be passed an instance of
     AutoCommandContext, which contains on it *buffer-local* methods that would
     be useful to you.  this is useful if you want to set some keybindings for a
     python buffer that you just opened """
+    return when('FileType', filetype)
 
-    def wrapped(fn):
-        au_name = _generate_autocommand_name(fn)
-        command("augroup %s" % au_name)
-        command("autocmd!")
-        ctx = AutoCommandContext()
-        call = register_fn(partial(fn, ctx))
-        command("autocmd FileType %s :python %s" % (filetype, call))
-        command("augroup END")
-        return fn
 
-    return wrapped
+def when_entering_window():
+    """ a decorator for functions you wish to run when the focus of a window
+    changes to a new one."""
+    return when('WinEnter')
 
 
 if "snake.plugin_loader" in sys.modules:
