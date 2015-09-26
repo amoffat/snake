@@ -634,25 +634,29 @@ class AutoCommandContext(object):
         return fn(*args, **kwargs)
 
 
-def when_buffer_is(filetype):
-    """ a decorator for functions you wish to run when the buffer
-    filetype=filetype.  your function will be passed an instance of
+def on_autocmd(event, filetype):
+    """ A decorator for functions to trigger on AutoCommand events.
+    Your function will be passed an instance of
     AutoCommandContext, which contains on it *buffer-local* methods that would
-    be useful to you.  this is useful if you want to set some keybindings for a
-    python buffer that you just opened """
-
+    be useful to you. A filetype of "*" matches all files.
+    For a list of eligible events, try :help autocmd-events in vim.  
+    """ 
     def wrapped(fn):
         au_name = _generate_autocommand_name(fn)
         command("augroup %s" % au_name)
         command("autocmd!")
         ctx = AutoCommandContext()
         call = register_fn(partial(fn, ctx))
-        command("autocmd FileType %s :python %s" % (filetype, call))
+        command("autocmd %s %s :python %s" % (event, filetype, call))
         command("augroup END")
         return fn
 
     return wrapped
 
+when_buffer_is = partial(on_autocmd, "FileType")
+when_buffer_is.__doc__ = """ A decorator for functions you wish to run when the buffer
+    filetype=filetype. This is useful if you want to set some keybindings for a
+    python buffer that you just opened """
 
 if "snake.plugin_loader" in sys.modules:
     plugin_loader = reload(plugin_loader)
