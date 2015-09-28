@@ -602,7 +602,8 @@ def process(stuff):
     return stuff + ".."
 
 opfunc("t", process)
-keys("Vtj")"""
+keys("Vjt")
+keys("jjdG")"""
         changed, output = run_vim(script, self.sample_block)
         self.assertEqual(changed, """Hail Mary, full of grace...
 The Lord is with thee...""")
