@@ -1,0 +1,16 @@
+os:
+    - linux
+
+language: python
+
+python:
+    - 2.7
+
+before_script:
+    - sudo add-apt-repository ppa:fcwu-tw/ppa -y
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq vim
+    - pip install sh
+
+script:
+    - python tests.py
