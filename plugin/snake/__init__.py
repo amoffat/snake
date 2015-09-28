@@ -566,17 +566,21 @@ def get_visual_selection():
     reselect_last_visual_selection()
     return val
 
+<<<<<<< HEAD
 
 def replace_selection(delete_motion, rep):
     with preserve_registers("a"):
         set_register("a", rep)
         keys(delete_motion)
+def replace_visual_selection(rep):
+    with preserve_registers("a"):
+        set_register("a", rep)
+        keys("gvd")
         if is_last_line() and False:
             keys('"ap')
         else:
             keys('"aP')
 
-replace_visual_selection = partial(replace_selection, "dgv")
 
 def set_buffer_contents(buf, s):
     set_buffer_lines(buf, s.split("\n"))
@@ -642,7 +646,7 @@ def on_autocmd(event, filetype):
     Your function will be passed an instance of
     AutoCommandContext, which contains on it *buffer-local* methods that would
     be useful to you. A filetype of "*" matches all files.
-    For a list of eligible events, try :help autocmd-events in vim.
+    For a list of eligible events, try :help autocmd-events in vim.  
     """ 
     def wrapped(fn):
         au_name = _generate_autocommand_name(fn)
@@ -661,6 +665,7 @@ when_buffer_is.__doc__ = """ A decorator for functions you wish to run when the 
     filetype=filetype. This is useful if you want to set some keybindings for a
     python buffer that you just opened """
 
+<<<<<<< HEAD
 def opfunc(key, userfunc=None):
     ''' see :help :map-operator 
     opfunc takes the motion-specified text.
@@ -749,12 +754,6 @@ def opfunc_handler(userfunc, a_0, motiontype):
 ##   if addl_options.get("preserve_selection", False):
 #   reselect_last_visual_selection()
 
-def yank(motion):
-    reg = "@"
-    with preserve_registers(reg):
-        keys('"%s%sy' % (reg, motion))
-        yanked = get_register(reg)
-    return yanked 
 
 if "snake.plugin_loader" in sys.modules:
     plugin_loader = reload(plugin_loader)

@@ -315,6 +315,11 @@ replace_visual_selection("awesome dude")
         self.assertEqual(changed, "The quick awesome dude jumps over the lazy \
 dog")
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 4f3897d3f0e3e75a2f09fb069687f7d5a3e7ca27
 class KeyMapTests(VimTests):
     def test_leader(self):
         script = r"""
@@ -557,6 +562,7 @@ send(get_buffers())
         })
 
 
+<<<<<<< HEAD
 class Opfunctests(VimTests):
     def test_opfunc_decorator(self):
         script = r"""
@@ -585,6 +591,8 @@ keys("Wt2W")
         self.assertEqual(output, "quick brown")
         self.assertEqual(changed, "The really fast fox jumps over the lazy dog")
 
+=======
+>>>>>>> 4f3897d3f0e3e75a2f09fb069687f7d5a3e7ca27
 if __name__ == "__main__":
     print(sh.vim(version=True))
     unittest.main(verbosity=2)
