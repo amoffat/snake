@@ -566,10 +566,6 @@ def get_visual_selection():
     reselect_last_visual_selection()
     return val
 
-def replace_selection(delete_motion, rep):
-    with preserve_registers("a"):
-        set_register("a", rep)
-        keys(delete_motion)
 def replace_visual_selection(rep):
     with preserve_registers("a"):
         set_register("a", rep)
@@ -578,7 +574,6 @@ def replace_visual_selection(rep):
             keys('"ap')
         else:
             keys('"aP')
-
 
 def set_buffer_contents(buf, s):
     set_buffer_lines(buf, s.split("\n"))
