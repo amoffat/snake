@@ -604,8 +604,8 @@ def process(stuff):
 opfunc("t", process)
 keys("Vtj")"""
         changed, output = run_vim(script, self.sample_block)
-        self.assertEqual(changed, "Hail Mary, full of grace...
-The Lord is with thee...")
+        self.assertEqual(changed, """Hail Mary, full of grace...
+The Lord is with thee...""")
 
 if __name__ == "__main__":
     print(sh.vim(version=True))
