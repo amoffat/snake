@@ -41,7 +41,7 @@ def command(cmd, capture=False):
         vim.command(cmd)
     return out
 
-def dispatch_mapped_function(key):
+def dispatch_mapped_function(key, *args):
     """ this function will be called by any function mapped to a key in visual
     mode.  because we can't tell vim "hey, call this arbitrary, possibly
     anonymous, callable on key press", we have a single dispatch function to do
@@ -51,7 +51,7 @@ def dispatch_mapped_function(key):
     except KeyError:
         raise Exception("unable to find mapped function with id() == %s" % key)
     else:
-        return fn()
+        return fn(*args)
 
 def _generate_autocommand_name(fn):
     """ takes a function and returns a name that is unique to the function and
