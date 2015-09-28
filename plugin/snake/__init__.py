@@ -695,7 +695,8 @@ def opfunc_handler(userfunc, a_0, motiontype):
     #preserve the option 
     sel_save = get_option("selection")
     set_option("selection", "inclusive")
-    if motiontype == 'v': 
+    print a_0
+    if a_0 and a_0 != "0": 
         pass
     elif motiontype == 'line':
 	keys("'[V']")
