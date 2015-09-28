@@ -684,7 +684,11 @@ endfunction'''
     #see :help map-operator
     key_map(key, ":set opfunc=%s<CR>g@" % vim_func_name)
     #We can call a python function directly here in visual mode, I -think-.
-    key_map(key, ":py  %s(visualmode(), 1) <CR>" % call , mode=VISUAL_MODE )
+    #key_map(key, ":<C-U>py  %s, visualmode(), 1) <CR>" % call , mode=VISUAL_MODE )
+    vmap = """:exe "<C-U>py  %s, " . '"' . visualmode() . '"' . " , 1) <CR>" """ % call 
+    print "<C-U>py  %s, " + '"' + 'visualmode()' + '", 1) <CR>'"" 
+    print vmap
+    #key_map(key, vmap, mode=VISUAL_MODE )
 
 def opfunc_handler(userfunc, a_0, motiontype):
     #preserve the option 
