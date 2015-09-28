@@ -661,8 +661,7 @@ def opfunc(key, userfunc=None):
     ''' see :help :map-operator 
     opfunc takes the motion-specified text.
     if opfunc returns a value, that text is replaced with opfunc's return value.'''
-    ''' I assume an opfunc must be in native VimL.'''
-    #opfunc is a wrapper
+    #When opfunc is a wrapper
     if userfunc is None: 
         def wrapper(userfunc):
             opfunc(key, userfunc)
@@ -676,27 +675,27 @@ def opfunc(key, userfunc=None):
     vim_func_name = prefix + str(num_registered) 
     assert vim_func_name not in existing_vimfuncs, '''VimL opfunc %s is not a unique name.''' % vim_func_name
     wrapped = partial(opfunc_handler, userfunc)
-    call = register_fn(wrapped)[:-1] #omit closing paren
+    call = register_fn(wrapped)[:-1] # omit closing paren
     vim_opfunc_template = '''function! %s(type, ...)
     silent exe ":py " . "%s, " . "'" . a:0 . "'" . "," . "'" . a:type .  "')"
 endfunction''' 
     command(vim_opfunc_template % (vim_func_name, call)) 
     #see :help map-operator
     key_map(key, ":set opfunc=%s<CR>g@" % vim_func_name)
-    #We can call a python function directly here in visual mode, I -think-.
-    #key_map(key, ":<C-U>py  %s, visualmode(), 1) <CR>" % call , mode=VISUAL_MODE )
+    '''We can call a python function directly when the operator is used in visual mode.'''
     vmap = r''':<C-U>silent exe "py  " . "%s, " . '"' . visualmode() . '"' . ", 1)" <CR>''' % call
-    #vmap = """:exe "<C-U>py  %s, " . '"' . visualmode() . '"' . " , 1) <CR>" """ % call 
-    #print "<C-U>py  %s, " + '"' + 'visualmode()' + '", 1) <CR>'"" 
-    print vmap
     key_map(key, vmap, mode=VISUAL_MODE )
 
-def opfunc_handler(userfunc, a_0, motiontype):
-    #preserve the option 
+def opfunc_handler(userfunc, visual_mode, motiontype):
+    '''see :help map-operator.
+    The "[" and "]" are used as temporary marks to signal the start
+    and end of where the motion. visually select between these marks and
+    send it to userfunc. If userfunc returns a value, replace the visual selection
+    with that value.'''
+    # preserve the option 
     sel_save = get_option("selection")
     set_option("selection", "inclusive")
-    print a_0
-    if a_0 and a_0 != "0": 
+    if visual_mode and visual_mode != "0": 
         pass
     elif motiontype == 'line':
 	keys("'[V']")
