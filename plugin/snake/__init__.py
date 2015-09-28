@@ -566,8 +566,6 @@ def get_visual_selection():
     reselect_last_visual_selection()
     return val
 
-<<<<<<< HEAD
-
 def replace_selection(delete_motion, rep):
     with preserve_registers("a"):
         set_register("a", rep)
@@ -665,7 +663,6 @@ when_buffer_is.__doc__ = """ A decorator for functions you wish to run when the 
     filetype=filetype. This is useful if you want to set some keybindings for a
     python buffer that you just opened """
 
-<<<<<<< HEAD
 def opfunc(key, userfunc=None):
     ''' see :help :map-operator 
     opfunc takes the motion-specified text.
