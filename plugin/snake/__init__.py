@@ -633,7 +633,6 @@ class AutoCommandContext(object):
         fn = partial(key_map, local=True)
         return fn(*args, **kwargs)
 
-
 def on_autocmd(event, filetype):
     """ A decorator for functions to trigger on AutoCommand events.
     Your function will be passed an instance of
@@ -671,27 +670,21 @@ def opfunc(key, userfunc=None):
         return wrapper 
 
     '''Just insure that the VimL opfunc has a unique name.'''
-    #TODO: make silent
     existing_vimfuncs = command(':silent function', True).split('\n')
     prefix = "SnakeGeneratedOpFunc"
     num_registered = len([s for s in existing_vimfuncs if s.startswith(prefix)])
-    vim_func_name = prefix + str(num_registered) #always have a unique name
+    vim_func_name = prefix + str(num_registered) 
     assert vim_func_name not in existing_vimfuncs, '''VimL opfunc %s is not a unique name.''' % vim_func_name
     wrapped = partial(opfunc_handler, userfunc)
-    call = register_fn(wrapped)
+    call = register_fn(wrapped)[:-1] #omit closing paren
     vim_opfunc_template = '''function! %s(type, ...)
-    silent exe ":py " . "%s(" . a:0 . "," a:type . ")<CR>"
+    silent exe ":py " . "%s, " . "'" . a:0 . "'" . "," . "'" . a:type .  "')"
 endfunction''' 
     command(vim_opfunc_template % (vim_func_name, call)) 
-    # what does the g@ do?
+    #see :help map-operator
     key_map(key, ":set opfunc=%s<CR>g@" % vim_func_name)
-    '''
-    key_map(key, ":<C-U>call {0}(visualmode(), 1)".format(vim_func_name), mode=VISUAL_MODE) 
-    #what is that <C-U> there?
-    '''
-    #I think we can call a python function directly here
+    #We can call a python function directly here in visual mode, I -think-.
     key_map(key, ":py  %s(visualmode(), 1) <CR>" % call , mode=VISUAL_MODE )
-
 
 def opfunc_handler(userfunc, a_0, motiontype):
     #preserve the option 
@@ -711,41 +704,7 @@ def opfunc_handler(userfunc, a_0, motiontype):
         return
     else:
         replace_visual_selection(result)
-    set_option("selection", "sel_save") 
-
-#def opfunc_handler(userfunc, a_0, a_type):
-#    #with preserv_options and preserv_state?
-#    mode = a_type
-#    sel_save = get_option("selection")
-#     set_option("selection", "inclusive")
-#    if mode == 'v': 
-#        maybe_replace_visual_mode(userfunc) 
-#        set_option("selection", "sel_save") 
-#        return
-#    elif mode == 'line':
-#	motion = "'[V']"
-#    elif mode == 'block'
-#	motion = "`[\<C-V>`]"
-#    else:
-#	motion = "`[v`]" 
-#    selected = yank(motion)
-#    result = userfunc(selected)
-#    if result is None:
-#        return
-#    else:
-#        replace_selection(motion + "d") 
-#    set_option("selection", "sel_save") 
-
-#TODO: refactor the part where I found this
-#def maybe_replace_visual_mode(fn):
-#   sel = get_visual_selection()
-#   rep = fn(sel)
-#   if rep is not None:
-#       replace_visual_selection(rep)
-#       #note this option below is not used
-##   if addl_options.get("preserve_selection", False):
-#   reselect_last_visual_selection()
-
+    set_option("selection", sel_save) 
 
 if "snake.plugin_loader" in sys.modules:
     plugin_loader = reload(plugin_loader)
