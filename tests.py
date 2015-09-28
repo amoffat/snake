@@ -567,23 +567,45 @@ def side_effect(s):
     called += 1
 keys("tw")
 keys("tj")
-send(called)
-"""
+send(called) """
         changed, output = run_vim(script)
         self.assertEqual(output, 3)
 
-    def test_opfunc_motion(self):
+    def test_opfunc_normal_mode(self):
         script = r"""
 def process(stuff):
     send(stuff)
     return "really fast"
 
 opfunc("t", process)
-keys("Wt2W")
-"""
+keys("Wt2W") """
         changed, output = run_vim(script, self.sample_text)
         self.assertEqual(output, "quick brown")
         self.assertEqual(changed, "The really fast fox jumps over the lazy dog")
+
+    def test_opfunc_visual_block(self):
+        script = r"""
+def process(stuff):
+    send(stuff)
+    return "nevermind."
+
+opfunc("t", process)
+keys("W<c-v>t$") """
+        changed, output = run_vim(script, self.sample_text)
+        self.assertEqual(output, "quick")
+        self.assertEqual(changed, "The nevermind.")
+
+    def test_opfunc_visual(self):
+        script = r"""
+def process(stuff):
+    send(stuff)
+    return stuff + ".."
+
+opfunc("t", process)
+keys("Vtj")"""
+        changed, output = run_vim(script, self.sample_block)
+        self.assertEqual(changed, "Hail Mary, full of grace...
+The Lord is with thee...")
 
 if __name__ == "__main__":
     print(sh.vim(version=True))
