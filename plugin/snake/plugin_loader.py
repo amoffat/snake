@@ -165,7 +165,7 @@ Please install virtualenv and pip so that one can be created." % plugin_name)
 
 
 _snake_plugin_paths = [BUNDLE_DIR]
-sys.meta_path = [SnakePluginHook(_snake_plugin_paths)]
+sys.meta_path.insert(0, SnakePluginHook(_snake_plugin_paths))
 
 
 
