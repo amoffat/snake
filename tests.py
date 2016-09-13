@@ -315,8 +315,6 @@ replace_visual_selection("awesome dude")
         self.assertEqual(changed, "The quick awesome dude jumps over the lazy \
 dog")
 
-
-
 class KeyMapTests(VimTests):
     def test_leader(self):
         script = r"""
@@ -558,6 +556,57 @@ send(get_buffers())
                 'name': 'test2'}
         })
 
+
+class Opfunctests(VimTests):
+    def test_opfunc_decorator(self):
+        script = r"""
+called = 0
+@opfunc("t")
+def side_effect(s):
+    global called
+    called += 1
+keys("tw")
+keys("tj")
+send(called) """
+        changed, output = run_vim(script)
+        self.assertEqual(output, 3)
+
+    def test_opfunc_normal_mode(self):
+        script = r"""
+def process(stuff):
+    send(stuff)
+    return "really fast"
+
+opfunc("t", process)
+keys("Wt2W") """
+        changed, output = run_vim(script, self.sample_text)
+        self.assertEqual(output, "quick brown")
+        self.assertEqual(changed, "The really fast fox jumps over the lazy dog")
+
+    def test_opfunc_visual_block(self):
+        script = r"""
+def process(stuff):
+    send(stuff)
+    return "nevermind."
+
+opfunc("t", process)
+keys("W<c-v>t$") """
+        changed, output = run_vim(script, self.sample_text)
+        self.assertEqual(output, "quick")
+        self.assertEqual(changed, "The nevermind.")
+
+    def test_opfunc_visual(self):
+        script = r"""
+def process(stuff):
+    send(stuff)
+    return stuff + ".."
+
+opfunc("t", process)
+keys("Vjt")
+keys("jjdG")"""
+        changed, output = run_vim(script, self.sample_block)
+        self.assertEqual(changed, """Hail Mary, full of grace...
+The Lord is with thee...""")
 
 if __name__ == "__main__":
     print(sh.vim(version=True))

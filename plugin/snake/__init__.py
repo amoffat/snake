@@ -41,7 +41,7 @@ def command(cmd, capture=False):
         vim.command(cmd)
     return out
 
-def dispatch_mapped_function(key):
+def dispatch_mapped_function(key, *args):
     """ this function will be called by any function mapped to a key in visual
     mode.  because we can't tell vim "hey, call this arbitrary, possibly
     anonymous, callable on key press", we have a single dispatch function to do
@@ -51,7 +51,7 @@ def dispatch_mapped_function(key):
     except KeyError:
         raise Exception("unable to find mapped function with id() == %s" % key)
     else:
-        return fn()
+        return fn(*args)
 
 def _generate_autocommand_name(fn):
     """ takes a function and returns a name that is unique to the function and
@@ -633,7 +633,6 @@ class AutoCommandContext(object):
         fn = partial(key_map, local=True)
         return fn(*args, **kwargs)
 
-
 def on_autocmd(event, filetype):
     """ A decorator for functions to trigger on AutoCommand events.
     Your function will be passed an instance of
@@ -657,6 +656,60 @@ when_buffer_is = partial(on_autocmd, "FileType")
 when_buffer_is.__doc__ = """ A decorator for functions you wish to run when the buffer
     filetype=filetype. This is useful if you want to set some keybindings for a
     python buffer that you just opened """
+
+def opfunc(key, userfunc=None):
+    ''' see :help :map-operator 
+    opfunc takes the motion-specified text.
+    if opfunc returns a value, that text is replaced with opfunc's return value.'''
+    #When opfunc is a wrapper
+    if userfunc is None: 
+        def wrapper(userfunc):
+            opfunc(key, userfunc)
+            return opfunc
+        return wrapper 
+
+    '''Just insure that the VimL opfunc has a unique name.'''
+    existing_vimfuncs = command(':silent function', True).split('\n')
+    prefix = "SnakeGeneratedOpFunc"
+    num_registered = len([s for s in existing_vimfuncs if s.startswith(prefix)])
+    vim_func_name = prefix + str(num_registered) 
+    assert vim_func_name not in existing_vimfuncs, '''VimL opfunc %s is not a unique name.''' % vim_func_name
+    wrapped = partial(opfunc_handler, userfunc)
+    call = register_fn(wrapped)[:-1] # omit closing paren
+    vim_opfunc_template = '''function! %s(type, ...)
+    silent exe ":py " . "%s, " . "'" . a:0 . "'" . "," . "'" . a:type .  "')"
+endfunction''' 
+    command(vim_opfunc_template % (vim_func_name, call)) 
+    #see :help map-operator
+    key_map(key, ":set opfunc=%s<CR>g@" % vim_func_name)
+    '''We can call a python function directly when the operator is used in visual mode.'''
+    vmap = r''':<C-U>silent exe "py  " . "%s, " . '"' . visualmode() . '"' . ", 1)" <CR>''' % call
+    key_map(key, vmap, mode=VISUAL_MODE )
+
+def opfunc_handler(userfunc, visual_mode, motiontype):
+    '''see :help map-operator.
+    The "[" and "]" are used as temporary marks to signal the start
+    and end of where the motion. visually select between these marks and
+    send it to userfunc. If userfunc returns a value, replace the visual selection
+    with that value.'''
+    # preserve the option 
+    sel_save = get_option("selection")
+    set_option("selection", "inclusive")
+    if visual_mode and visual_mode != "0": 
+        pass
+    elif motiontype == 'line':
+	keys("'[V']")
+    elif motiontype == 'block':
+	keys("`[\<C-V>`]")
+    else:
+	keys("`[v`]" )
+    selected = get_visual_selection()
+    result = userfunc(selected)
+    if result is None:
+        return
+    else:
+        replace_visual_selection(result)
+    set_option("selection", sel_save) 
 
 if "snake.plugin_loader" in sys.modules:
     plugin_loader = reload(plugin_loader)
