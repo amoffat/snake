@@ -27,6 +27,16 @@ _BUFFER_LIST_REGEX = re.compile(r"^\s*(\d+)\s+(.+?)\s+\"(.+?)\"", re.M)
 _mapped_functions = {
 }
 
+
+def _get_buffer(i):
+    """ a shim for vim buffer index inconsistencies """
+    # for some reason, version 7.3 indexes their vim.buffers at 0 for buffer 1.
+    # version 704 has buffer 1 at index 1, even though len(vim.buffers) == 1.
+    # its weird.
+    if get_vim_version() < 704:
+        i -= 1
+    return vim.buffers[i]
+
 def command(cmd, capture=False):
     """ wraps vim.capture to execute a vim command.  if capture is true, we'll
     return the output of that command """
@@ -40,6 +50,12 @@ def command(cmd, capture=False):
         out = None
         vim.command(cmd)
     return out
+
+
+def get_vim_version():
+    version = int(get("version", scope="v"))
+    return version
+
 
 def dispatch_mapped_function(key):
     """ this function will be called by any function mapped to a key in visual
@@ -579,7 +595,7 @@ def set_buffer_contents(buf, s):
     set_buffer_lines(buf, s.split("\n"))
 
 def set_buffer_lines(buf, l):
-    b = vim.buffers[buf]
+    b = _get_buffer(buf)
     b[:] = l
 
 def get_current_buffer_contents():
@@ -590,7 +606,7 @@ def get_buffer_contents(buf):
     return contents
 
 def get_buffer_lines(buf):
-    b = vim.buffers[buf]
+    b = _get_buffer(buf)
     return list(b)
 
 def raw_input(prompt=""):
