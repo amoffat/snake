@@ -66,12 +66,14 @@ EOF
     # and load script_file as our script to run
     args = ["-N", "-n", "-i", "NONE", "-u", vimrc, "-S", script_file.name, "-b"]
 
-    #commands.append("exec 'silent !echo '. errmsg")
 
     # sometimes we need to specify our own commands, but most times not
     if commands is None:
+        commands = []
+        #commands = ["exec 'silent !echo '. errmsg"]
+
         # save and exit
-        commands = ["wqa!"]
+        commands.append("wqa!")
 
     for command in commands:
         args.extend(["-c", command])
