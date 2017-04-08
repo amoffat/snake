@@ -33,12 +33,15 @@ PYEVAL = "pyeval"
 if not bool(int(vim.eval("exists('*pyeval')"))):
     PYEVAL = "Pyeval"
 
+VERSION = int(int(vim.eval("v:version")))
+
+
 def _get_buffer(i):
     """ a shim for vim buffer index inconsistencies """
     # for some reason, version 7.3 indexes their vim.buffers at 0 for buffer 1.
     # version 704 has buffer 1 at index 1, even though len(vim.buffers) == 1.
     # its weird.
-    if get_vim_version() < 704:
+    if VERSION < 704:
         i -= 1
     return vim.buffers[i]
 
@@ -55,11 +58,6 @@ def command(cmd, capture=False):
         out = None
         vim.command(cmd)
     return out
-
-
-def get_vim_version():
-    version = int(get("version", scope="v"))
-    return version
 
 
 def dispatch_mapped_function(key):
