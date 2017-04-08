@@ -27,6 +27,11 @@ _BUFFER_LIST_REGEX = re.compile(r"^\s*(\d+)\s+(.+?)\s+\"(.+?)\"", re.M)
 _mapped_functions = {
 }
 
+# if pyeval doesn't exist, we use our own, defined in prelude.vim.  pyeval
+# doesn't exist in vim 7.3
+PYEVAL = "pyeval"
+if not bool(int(vim.eval("exists('*pyeval')"))):
+    PYEVAL = "Pyeval"
 
 def _get_buffer(i):
     """ a shim for vim buffer index inconsistencies """
@@ -166,7 +171,7 @@ def abbrev(word, expansion, local=False):
 
     if callable(expansion):
         fn_str = register_fn(expansion)
-        expansion = "<C-r>=pyeval('%s')<CR>" % escape_string_sq(fn_str)
+        expansion = "<C-r>=%s('%s')<CR>" % (PYEVAL, escape_string_sq(fn_str))
 
     command("%s %s %s" % (cmd, word, expansion))
 

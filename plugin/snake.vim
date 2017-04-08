@@ -1,3 +1,6 @@
+" contains custom vimscript stuff sourced by snake and the tests
+exec "source " . expand("<sfile>:p:h") . "/snake/prelude.vim"
+
 python << EOF
 import sys
 import vim
