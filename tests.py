@@ -35,6 +35,7 @@ def clean_output(output):
 VIMRC = create_tmp_file(r"""
 let mapleader = ","
 set clipboard=unnamed
+source {SNAKE_DIR}/snake/prelude.vim
 python << EOF
 import sys
 from os.path import expanduser
@@ -50,7 +51,8 @@ def run_vim(script, input_str=None, vimrc=VIMRC.name, commands=None):
 
     # we do some super ugly stuff and wrap our script in some helpers, namely a
     # helper to send output from our snake script to our test
-    script = """python << EOF
+    script = """
+python << EOF
 import pickle
 from snake import *
 def send(stuff):
@@ -66,12 +68,14 @@ EOF
     # and load script_file as our script to run
     args = ["-N", "-n", "-i", "NONE", "-u", vimrc, "-S", script_file.name, "-b"]
 
-    #commands.append("exec 'silent !echo '. errmsg")
 
     # sometimes we need to specify our own commands, but most times not
     if commands is None:
+        commands = []
+        #commands = ["exec 'silent !echo '. errmsg"]
+
         # save and exit
-        commands = ["wqa!"]
+        commands.append("wqa!")
 
     for command in commands:
         args.extend(["-c", command])

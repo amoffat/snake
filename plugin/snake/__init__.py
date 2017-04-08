@@ -8,7 +8,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.13"
+__version__ = "0.14"
 
 
 NORMAL_MODE = "n"
@@ -27,6 +27,24 @@ _BUFFER_LIST_REGEX = re.compile(r"^\s*(\d+)\s+(.+?)\s+\"(.+?)\"", re.M)
 _mapped_functions = {
 }
 
+# if pyeval doesn't exist, we use our own, defined in prelude.vim.  pyeval
+# doesn't exist in vim 7.3
+PYEVAL = "pyeval"
+if not bool(int(vim.eval("exists('*pyeval')"))):
+    PYEVAL = "Pyeval"
+
+VERSION = int(int(vim.eval("v:version")))
+
+
+def _get_buffer(i):
+    """ a shim for vim buffer index inconsistencies """
+    # for some reason, version 7.3 indexes their vim.buffers at 0 for buffer 1.
+    # version 704 has buffer 1 at index 1, even though len(vim.buffers) == 1.
+    # its weird.
+    if VERSION < 704:
+        i -= 1
+    return vim.buffers[i]
+
 def command(cmd, capture=False):
     """ wraps vim.capture to execute a vim command.  if capture is true, we'll
     return the output of that command """
@@ -40,6 +58,7 @@ def command(cmd, capture=False):
         out = None
         vim.command(cmd)
     return out
+
 
 def dispatch_mapped_function(key):
     """ this function will be called by any function mapped to a key in visual
@@ -150,7 +169,7 @@ def abbrev(word, expansion, local=False):
 
     if callable(expansion):
         fn_str = register_fn(expansion)
-        expansion = "<C-r>=pyeval('%s')<CR>" % escape_string_sq(fn_str)
+        expansion = "<C-r>=%s('%s')<CR>" % (PYEVAL, escape_string_sq(fn_str))
 
     command("%s %s %s" % (cmd, word, expansion))
 
@@ -579,7 +598,7 @@ def set_buffer_contents(buf, s):
     set_buffer_lines(buf, s.split("\n"))
 
 def set_buffer_lines(buf, l):
-    b = vim.buffers[buf]
+    b = _get_buffer(buf)
     b[:] = l
 
 def get_current_buffer_contents():
@@ -590,7 +609,7 @@ def get_buffer_contents(buf):
     return contents
 
 def get_buffer_lines(buf):
-    b = vim.buffers[buf]
+    b = _get_buffer(buf)
     return list(b)
 
 def raw_input(prompt=""):
