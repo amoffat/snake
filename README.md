@@ -1,9 +1,9 @@
-# Snake (SNAAAAAAAAKKKE)
+![snake logo](https://github.com/amoffat/snake/blob/master/logo.gif)
 
 [![Build
 Status](https://travis-ci.org/amoffat/snake.svg?branch=master)](https://travis-ci.org/amoffat/snake)
 
-Snake lets you use Python to its fullest extent to write Vim plugins:
+Snake (SNAAAAAAAAAKKKE) lets you use Python to its fullest extent to write Vim plugins:
 
 ```python
 from snake import *
