@@ -3,52 +3,54 @@
 [![Build
 Status](https://travis-ci.org/amoffat/snake.svg?branch=master)](https://travis-ci.org/amoffat/snake)
 
-Snake (SNAAAAAAAAAKKKE) lets you use Python to its fullest extent to write Vim plugins:
+Snake (SNAAAAAAAAAKKKE) is a Python module for Vim that let's you use Python to
+its fullest extent to enhance Vim.
+
+Here's an example of a helper function, written in Python, using Snake, to
+toggle the word under your cursor between snake-case and camel-case when you
+press `<leader>c`:
 
 ```python
-from snake import *
+import snake
 
-@key_map("<leader>c")
+@snake.key_map("<leader>c")
 def toggle_snake_case_camel_case():
-    """ toggles a word between snake case (some_function) and camelcase
-    (someFunction) """
-    word = get_word()
+    """ take the word under the cursor and toggle it between snake-case and
+    camel-case """
 
-    # it's snake case
+    word = snake.get_word()
+
+    # is it snake case?
     if "_" in word:
         chunks = word.split("_")
         camel_case = chunks[0] + "".join([chunk.capitalize() for chunk in
             chunks[1:]])
-        replace_word(camel_case)
+        snake.replace_word(camel_case)
 
-    # it's camel case
+    # is it camel case?
     else:
         # split our word on capital letters followed by non-capital letters
         chunks = filter(None, re.split("([A-Z][^A-Z]*)", word))
         snake_case = "_".join([chunk.lower() for chunk in chunks])
-        replace_word(snake_case)
+        snake.replace_word(snake_case)
 ```
-
-Pressing "&lt;leader&gt;c" will then toggle between snake and camel case for the
-current word!
 
 ![Metal Gear Solid Snake Success](http://i.imgur.com/ZFr3vXG.gif)
 
-## [API Reference](docs/api_reference.md)
+## [Full API Reference](docs/api_reference.md)
 
-# Why do you want this?
-
-Vim is great, but vimscript is painful as a programming language.  Let's use
-Python instead.  Here's some cool things you can do:
+# Some other cool things you can do
 
 ## Bind a function to a key
 
-```python
-from snake import *
+When you press the key pattern in ``key_map``, the decorated function will run.
 
-@key_map("<leader>r")
+```python
+import snake
+
+@snake.key_map("<leader>r")
 def reverse():
-    replace_word(get_word()[::-1])
+    snake.replace_word(snake.get_word()[::-1])
 ```
 
 ## Use a function for an abbreviation
@@ -57,10 +59,10 @@ A Python function can be expanded dynamically as you type an abbreviation in
 insert mode.
 
 ```python
-from snake import *
+import snake
 import time
 
-abbrev("curtime", time.ctime)
+snake.abbrev("curtime", time.ctime)
 ```
 
 ## Have a function run for a file type
@@ -69,9 +71,9 @@ Sometimes it is convenient to run some code when the buffer you open is of a
 specific file type.
 
 ```python
-from snake import *
+import snake
 
-@when_buffer_is("python")
+@snake.when_buffer_is("python")
 def setup_python_folding(ctx):
     ctx.set_option("foldmethod", "indent")
     ctx.set_option("foldnestmax", 2)
@@ -85,7 +87,7 @@ only to the buffer you just opened, not globally.
 ## Press arbitrary keys as if you typed them
 
 ```python
-from snake import *
+from snake import keys
 
 def uppercase_second_word():
     keys("gg") # go to top of file, first character
@@ -94,7 +96,7 @@ def uppercase_second_word():
     keys("~") # uppercase it
 ```
 
-# How do I get it?
+# Installation
 
 Your Vim version must include [`+python`](http://vimdoc.sourceforge.net/htmldoc/various.html#+python) to use Snake. You can check with `:version`.
 
@@ -124,13 +126,14 @@ Re-source your `.vimrc`. Then `NeoBundleInstall`
 
 # Where do I write my Snake code?
 
-`.vimrc.py` is intended to be the python equivalent of `.vimrc`.  Snake.vim will
-load it on startup.  It should contain all of your Snake initialization code and
-do any imports of other Snake plugins.  If were so inclined, you could move all
-of your vim settings and options into `.vimrc.py` as well:
+`~/.vimrc.py` is intended to be the python equivalent of `~/.vimrc`.  Snake will
+load and evaluate it on startup.  It should contain all of your Snake
+initialization code and do any imports of other Snake plugins.  If were so
+inclined, you could move all of your vim settings and options into `~/.vimrc.py`
+as well:
 
 ```python
-from snake import *
+from snake import multi_set_option, let, multi_command
 
 multi_set_option(
     "nocompatible",
