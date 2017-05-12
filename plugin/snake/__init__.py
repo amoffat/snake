@@ -159,6 +159,16 @@ def preserve_registers(*regs):
             else:
                 set_register(reg, old_contents)
 
+def debug(msg, persistent=False):
+    """ prints a msg to your lower vim command area, for debugging.  if you set
+    persistent=True, you can view your previous message by executing :messages """
+    msg = str(msg)
+    cmd = "echo"
+    if persistent:
+        cmd = "echom"
+    command("%s '%s'" % (cmd, escape_string_sq(msg)))
+
+
 def abbrev(word, expansion, local=False):
     """ creates an abbreviation in insert mode.  expansion can be a string to
     expand to or a function that returns a value to serve as the expansion """
