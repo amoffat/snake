@@ -8,7 +8,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.14"
+__version__ = "0.14.1"
 
 
 NORMAL_MODE = "n"
