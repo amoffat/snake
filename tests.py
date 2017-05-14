@@ -211,6 +211,28 @@ send([word1, word2])
         self.assertEqual(output[0], "art")
         self.assertEqual(output[1], "Mary")
 
+
+    def test_preserve_mode(self):
+        script = r"""
+mode1 = get_mode()
+with preserve_mode():
+    keys("v")
+    mode2 = get_mode()
+mode3 = get_mode()
+
+keys("V")
+mode4 = get_mode()
+with preserve_mode():
+    keys("\<esc>")
+    mode5 = get_mode()
+mode6 = get_mode()
+
+send([mode1, mode2, mode3, mode4, mode5, mode6])
+"""
+        _, modes = run_vim(script, self.sample_block)
+        self.assertEqual(modes, ["n", "v", "n", "V", "n", "V"])
+
+
     def test_search(self):
         script = r"""
 search("Mary")
@@ -291,22 +313,27 @@ send(p1 == p2 and p1 != eof)
     def test_get_visual_range(self):
         script = r"""
 keys("ggllvjjl")
+keys("\<esc>")
 pos = get_visual_range()
-send(pos)
+send([pos, get_mode()])
 """
         changed, output = run_vim(script, self.sample_block)
-        (start_row, start_col), (end_row, end_col) = output
+        ((start_row, start_col), (end_row, end_col)), mode = output
         self.assertEqual(start_row, 1)
         self.assertEqual(start_col, 3)
         self.assertEqual(end_row, 3)
         self.assertEqual(end_col, 4)
+        self.assertEqual(mode, "n")
 
     def test_get_visual_selection(self):
         script = r"""
 keys("ggllvjjl")
-send(get_visual_selection())
+keys("\<esc>")
+send([get_visual_selection(), get_mode()])
 """
         changed, output = run_vim(script, self.sample_block)
+        output, mode = output
+        self.assertEqual(mode, "n")
         self.assertEqual(output, "il Mary, full of grace.\nThe Lord is with \
 thee.\nBles")
 

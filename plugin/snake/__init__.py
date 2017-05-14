@@ -8,7 +8,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.14"
+__version__ = "0.14.1"
 
 
 NORMAL_MODE = "n"
@@ -68,7 +68,12 @@ def dispatch_mapped_function(key):
     try:
         fn = _mapped_functions[key]
     except KeyError:
-        raise Exception("unable to find mapped function with id() == %s" % key)
+        raise Exception("""unable to find mapped function with id() == %s.
+            Something bad related to reloading has happened.  Typically, this is
+            because you set up a key_map inside of a @when_buffer_is and
+            reloaded your ~/.vim.py.  The result is that the function decorated
+            by @when_buffer_is isn't re-run with updated key_mappings, so the
+            key_mappings have references to old callbacks.""" % key)
     else:
         return fn()
 
@@ -99,7 +104,8 @@ def register_fn(fn):
 
 @contextmanager
 def preserve_cursor():
-    """ prevents change of cursor state """
+    """ persists cursor state across context. does not work in visual mode,
+    because visual mode has 2 cursor locations, for start and end cursors """
     p = get_cursor_position()
     try:
         yield
@@ -117,18 +123,21 @@ def preserve_buffer():
 @contextmanager
 def preserve_mode():
     """ prevents a change of vim mode state """
-    yield
-    return
-    # TODO can't seem to get this to return the actual mode besides 'n'!!
     old_mode = get_mode()
     try:
         yield
     finally:
-        return
         if old_mode == "n":
             set_normal_mode()
-        elif old_mode == "v":
+        elif old_mode in ("v", "V", "^V"):
             set_visual_mode()
+
+
+def set_normal_mode():
+    keys("\<esc>")
+
+def set_visual_mode():
+    keys("\<esc>gv")
 
 @contextmanager
 def preserve_registers(*regs):
@@ -158,6 +167,16 @@ def preserve_registers(*regs):
                 clear_register(reg)
             else:
                 set_register(reg, old_contents)
+
+def debug(msg, persistent=False):
+    """ prints a msg to your lower vim command area, for debugging.  if you set
+    persistent=True, you can view your previous message by executing :messages """
+    msg = str(msg)
+    cmd = "echo"
+    if persistent:
+        cmd = "echom"
+    command("%s '%s'" % (cmd, escape_string_sq(msg)))
+
 
 def abbrev(word, expansion, local=False):
     """ creates an abbreviation in insert mode.  expansion can be a string to
@@ -205,19 +224,6 @@ def set_cursor_position(pos):
     """ set our cursor position.  pos is a tuple of (row, col) """
     full_pos = "[0, %d, %d, 0]" % (pos[0], pos[1])
     command("call setpos('.', %s)" % full_pos)
-
-def get_visual_range():
-    """ returns the start (row, col) and end (row, col) of our range in visual
-    mode """
-    keys("\<esc>gv")
-    _, start_row, start_col, _ = vim.eval("getpos('v')")
-    start_row = int(start_row)
-    start_col = int(start_col)
-    with preserve_cursor():
-        keys("`>")
-        end_row, end_col = get_cursor_position()
-    reselect_last_visual_selection()
-    return (start_row, start_col), (end_row, end_col)
 
 
 def preserve_state():
@@ -391,7 +397,8 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
     # we're using key_map as a decorator
     if maybe_fn is None:
         def wrapper(fn):
-            key_map(key, fn, mode=mode, recursive=recursive, local=local)
+            key_map(key, fn, mode=mode, recursive=recursive, local=local,
+                    **addl_options)
             return fn
         return wrapper
 
@@ -440,6 +447,19 @@ def step():
     so far """
     redraw()
     time.sleep(1)
+
+@preserve_state()
+def get_visual_range():
+    """ returns the start (row, col) and end (row, col) of our range in visual
+    mode """
+    keys("\<esc>gv")
+    _, start_row, start_col, _ = vim.eval("getpos('v')")
+    start_row = int(start_row)
+    start_col = int(start_col)
+    with preserve_cursor():
+        keys("`>")
+        end_row, end_col = get_cursor_position()
+    return (start_row, start_col), (end_row, end_col)
 
 def set_buffer(buf):
     command("buffer %d" % buf)
@@ -582,7 +602,6 @@ def new_buffer(name, type=BUFFER_SCRATCH):
 def get_visual_selection():
     keys("\<esc>gvy")
     val = get_register("0")
-    reselect_last_visual_selection()
     return val
 
 def replace_visual_selection(rep):
