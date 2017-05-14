@@ -68,7 +68,12 @@ def dispatch_mapped_function(key):
     try:
         fn = _mapped_functions[key]
     except KeyError:
-        raise Exception("unable to find mapped function with id() == %s" % key)
+        raise Exception("""unable to find mapped function with id() == %s.
+            Something bad related to reloading has happened.  Typically, this is
+            because you set up a key_map inside of a @when_buffer_is and
+            reloaded your ~/.vim.py.  The result is that the function decorated
+            by @when_buffer_is isn't re-run with updated key_mappings, so the
+            key_mappings have references to old callbacks.""" % key)
     else:
         return fn()
 
