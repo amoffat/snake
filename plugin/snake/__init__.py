@@ -406,7 +406,8 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
     # we're using key_map as a decorator
     if maybe_fn is None:
         def wrapper(fn):
-            key_map(key, fn, mode=mode, recursive=recursive, local=local)
+            key_map(key, fn, mode=mode, recursive=recursive, local=local,
+                    **addl_options)
             return fn
         return wrapper
 
