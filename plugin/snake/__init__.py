@@ -123,18 +123,21 @@ def preserve_buffer():
 @contextmanager
 def preserve_mode():
     """ prevents a change of vim mode state """
-    yield
-    return
-    # TODO can't seem to get this to return the actual mode besides 'n'!!
     old_mode = get_mode()
     try:
         yield
     finally:
-        return
         if old_mode == "n":
             set_normal_mode()
-        elif old_mode == "v":
+        elif old_mode in ("v", "V", "^V"):
             set_visual_mode()
+
+
+def set_normal_mode():
+    keys("\<esc>")
+
+def set_visual_mode():
+    keys("\<esc>gv")
 
 @contextmanager
 def preserve_registers(*regs):
@@ -221,19 +224,6 @@ def set_cursor_position(pos):
     """ set our cursor position.  pos is a tuple of (row, col) """
     full_pos = "[0, %d, %d, 0]" % (pos[0], pos[1])
     command("call setpos('.', %s)" % full_pos)
-
-def get_visual_range():
-    """ returns the start (row, col) and end (row, col) of our range in visual
-    mode """
-    keys("\<esc>gv")
-    _, start_row, start_col, _ = vim.eval("getpos('v')")
-    start_row = int(start_row)
-    start_col = int(start_col)
-    with preserve_cursor():
-        keys("`>")
-        end_row, end_col = get_cursor_position()
-    reselect_last_visual_selection()
-    return (start_row, start_col), (end_row, end_col)
 
 
 def preserve_state():
@@ -458,6 +448,19 @@ def step():
     redraw()
     time.sleep(1)
 
+@preserve_state()
+def get_visual_range():
+    """ returns the start (row, col) and end (row, col) of our range in visual
+    mode """
+    keys("\<esc>gv")
+    _, start_row, start_col, _ = vim.eval("getpos('v')")
+    start_row = int(start_row)
+    start_col = int(start_col)
+    with preserve_cursor():
+        keys("`>")
+        end_row, end_col = get_cursor_position()
+    return (start_row, start_col), (end_row, end_col)
+
 def set_buffer(buf):
     command("buffer %d" % buf)
 
@@ -599,7 +602,6 @@ def new_buffer(name, type=BUFFER_SCRATCH):
 def get_visual_selection():
     keys("\<esc>gvy")
     val = get_register("0")
-    reselect_last_visual_selection()
     return val
 
 def replace_visual_selection(rep):
