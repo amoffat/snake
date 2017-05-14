@@ -104,7 +104,8 @@ def register_fn(fn):
 
 @contextmanager
 def preserve_cursor():
-    """ prevents change of cursor state """
+    """ persists cursor state across context. does not work in visual mode,
+    because visual mode has 2 cursor locations, for start and end cursors """
     p = get_cursor_position()
     try:
         yield
