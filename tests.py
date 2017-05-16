@@ -35,6 +35,7 @@ def clean_output(output):
 VIMRC = create_tmp_file(r"""
 let mapleader = ","
 set clipboard=unnamed
+set t_vb=ERROR
 source {SNAKE_DIR}/snake/prelude.vim
 python << EOF
 import sys

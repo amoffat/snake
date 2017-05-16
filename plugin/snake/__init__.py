@@ -8,7 +8,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.14.2"
+__version__ = "0.14.3"
 
 
 NORMAL_MODE = "n"
@@ -124,20 +124,18 @@ def preserve_buffer():
 def preserve_mode():
     """ prevents a change of vim mode state """
     old_mode = get_mode()
+    visual_modes = ("v", "V", "^V")
+
     try:
         yield
     finally:
-        if old_mode == "n":
-            set_normal_mode()
-        elif old_mode in ("v", "V", "^V"):
-            set_visual_mode()
-
-
-def set_normal_mode():
-    keys("\<esc>")
-
-def set_visual_mode():
-    keys("\<esc>gv")
+        cur_mode = get_mode()
+        if cur_mode == "n":
+            if old_mode in visual_modes:
+                keys("gv")
+        elif cur_mode in visual_modes:
+            if old_mode == "n":
+                keys("\<esc>")
 
 @contextmanager
 def preserve_registers(*regs):
@@ -413,6 +411,7 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
 
     if callable(maybe_fn):
         fn = maybe_fn
+        fn_takes_selection = len(inspect.getargspec(fn).args)
 
         # if we're mapping in visual mode, we're going to assume that the
         # function takes the contents of the visual selection.  if the function
@@ -422,8 +421,14 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
             old_fn = fn
             @wraps(fn)
             def wrapped():
-                sel = get_visual_selection()
-                rep = old_fn(sel)
+                # only if we're expecting a selection should we pass the
+                # selection.  this has side effects
+                if fn_takes_selection:
+                    sel = get_visual_selection()
+                    rep = old_fn(sel)
+                else:
+                    rep = old_fn()
+
                 if rep is not None:
                     replace_visual_selection(rep)
                 if addl_options.get("preserve_selection", False):

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.3 - 5/16/17
+* make visual selection callback argument optional
+* bugfix where mode preserving context can yield annoying errors
+
 ## 0.14.2 - 5/16/17
 * bugfix in restore order of state preservation contexts
 
