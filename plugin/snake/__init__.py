@@ -234,8 +234,8 @@ def preserve_state():
         def wrapper(*args, **kwargs):
             # python 2.6 doesn't support this syntax:
             #with preserve_cursor(), preserve_mode(), preserve_registers():
-            with preserve_cursor():
-                with preserve_mode():
+            with preserve_mode():
+                with preserve_cursor():
                     with preserve_registers():
                         return fn(*args, **kwargs)
         return wrapper
