@@ -411,6 +411,7 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
 
     if callable(maybe_fn):
         fn = maybe_fn
+        fn_takes_selection = len(inspect.getargspec(fn).args)
 
         # if we're mapping in visual mode, we're going to assume that the
         # function takes the contents of the visual selection.  if the function
@@ -420,8 +421,14 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
             old_fn = fn
             @wraps(fn)
             def wrapped():
-                sel = get_visual_selection()
-                rep = old_fn(sel)
+                # only if we're expecting a selection should we pass the
+                # selection.  this has side effects
+                if fn_takes_selection:
+                    sel = get_visual_selection()
+                    rep = old_fn(sel)
+                else:
+                    rep = old_fn()
+
                 if rep is not None:
                     replace_visual_selection(rep)
                 if addl_options.get("preserve_selection", False):
