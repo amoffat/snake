@@ -124,20 +124,18 @@ def preserve_buffer():
 def preserve_mode():
     """ prevents a change of vim mode state """
     old_mode = get_mode()
+    visual_modes = ("v", "V", "^V")
+
     try:
         yield
     finally:
-        if old_mode == "n":
-            set_normal_mode()
-        elif old_mode in ("v", "V", "^V"):
-            set_visual_mode()
-
-
-def set_normal_mode():
-    keys("\<esc>")
-
-def set_visual_mode():
-    keys("\<esc>gv")
+        cur_mode = get_mode()
+        if cur_mode == "n":
+            if old_mode in visual_modes:
+                keys("gv")
+        elif cur_mode in visual_modes:
+            if old_mode == "n":
+                keys("\<esc>")
 
 @contextmanager
 def preserve_registers(*regs):
