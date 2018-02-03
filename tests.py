@@ -39,7 +39,7 @@ VIMRC = create_tmp_file(r"""
 let mapleader = ","
 set clipboard=unnamed
 set t_vb=ERROR
-source {SNAKE_DIR}/snake/prelude.vim
+source {SNAKE_DIR}/prelude.vim
 {PYTHON_CMD} << EOF
 import sys
 from os.path import expanduser
