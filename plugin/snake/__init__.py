@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function, unicode_literals
+
 import vim
 from contextlib import contextmanager 
 from functools import wraps, partial
@@ -8,7 +10,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.14.3"
+__version__ = "0.15.0"
 
 
 NORMAL_MODE = "n"
@@ -20,6 +22,10 @@ BUFFER_SCRATCH = 0
 
 NS_GLOBAL = "g"
 NS_BUFFER = "b"
+
+PYTHON_CMD = "python"
+IS_PY3 = sys.version_info[0] == 3
+PYTHON_CMD = "python3" if IS_PY3 else "python"
 
 _LEADER_REGEX = re.compile(r"\\<leader>", re.I)
 _BUFFER_LIST_REGEX = re.compile(r"^\s*(\d+)\s+(.+?)\s+\"(.+?)\"", re.M)
@@ -262,7 +268,7 @@ def multi_let(namespace, **name_values):
         let(name, value, namespace=namespace)
 
 def _serialize_obj(obj):
-    if isinstance(obj, basestring):
+    if isinstance(obj, str):
         obj = "'%s'" % escape_string_sq(obj)
     # TODO allow other kinds of serializations?
     return obj
@@ -436,7 +442,7 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
             fn = wrapped
 
         call = register_fn(fn)
-        command("%s <silent> %s :python %s<CR>" % (map_command, key, call))
+        command("%s <silent> %s :%s %s<CR>" % (map_command, key, PYTHON_CMD, call))
 
     else:
         command("%s %s %s" % (map_command, key, maybe_fn))
@@ -690,7 +696,7 @@ def on_autocmd(event, filetype):
         command("autocmd!")
         ctx = AutoCommandContext()
         call = register_fn(partial(fn, ctx))
-        command("autocmd %s %s :python %s" % (event, filetype, call))
+        command("autocmd %s %s :%s %s" % (event, filetype, PYTHON_CMD, call))
         command("augroup END")
         return fn
 
@@ -704,4 +710,4 @@ when_buffer_is.__doc__ = """ A decorator for functions you wish to run when the 
 if "snake.plugin_loader" in sys.modules:
     plugin_loader = reload(plugin_loader)
 else:
-    import plugin_loader
+    from . import plugin_loader

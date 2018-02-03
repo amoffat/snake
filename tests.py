@@ -4,20 +4,28 @@ import tempfile
 import sys
 import unittest
 import sh
-import pickle
+import json
 import codecs
 import re
 
 THIS_DIR = dirname(abspath(__file__))
 SNAKE_DIR = join(THIS_DIR, "plugin")
-IS_PY3 = sys.version_info[0] == 3
+
+# as distinguised from the python *vim* is running
+TEST_IS_PY3 = sys.version_info[0] == 3
+
+version_str = sh.vim(version=True).strip()
+
+VIM_IS_PY3 = "+python3" in version_str
+PYTHON_CMD = "python3" if VIM_IS_PY3 else "python"
+
 
 def create_tmp_file(code, prefix="tmp", delete=True):
     """ creates a temporary test file that lives on disk, on which we can run
     python with sh """
 
     py = tempfile.NamedTemporaryFile(prefix=prefix, delete=delete)
-    if IS_PY3:
+    if TEST_IS_PY3:
         code = bytes(code, "UTF-8")
     py.write(code)
     py.flush()
@@ -27,41 +35,36 @@ def create_tmp_file(code, prefix="tmp", delete=True):
     return py
 
 
-def clean_output(output):
-    """ for some reason, vim is outputting escape sequences in our errors.  we
-    need to trim it out so we can read the errors """
-    return re.sub(r'\x1b[^m]*m', '', output)
-
 VIMRC = create_tmp_file(r"""
 let mapleader = ","
 set clipboard=unnamed
 set t_vb=ERROR
 source {SNAKE_DIR}/snake/prelude.vim
-python << EOF
+{PYTHON_CMD} << EOF
 import sys
 from os.path import expanduser
 sys.path.insert(0, "{SNAKE_DIR}")
 import snake
-""".format(SNAKE_DIR=SNAKE_DIR))
+""".format(PYTHON_CMD=PYTHON_CMD, SNAKE_DIR=SNAKE_DIR))
 
 
 def run_vim(script, input_str=None, vimrc=VIMRC.name, commands=None):
     # we can't use a real fifo because it will block on opening, because one
     # side will wait for the other side to open before unblocking
-    fifo = tempfile.NamedTemporaryFile(delete=True)
+    fifo = tempfile.NamedTemporaryFile(delete=True, mode="w+b")
 
     # we do some super ugly stuff and wrap our script in some helpers, namely a
     # helper to send output from our snake script to our test
     script = """
-python << EOF
-import pickle
+{PYTHON_CMD} << EOF
+import json
 from snake import *
 def send(stuff):
     with open("{fifo_filename}", "w") as output:
-        pickle.dump(stuff, output)
+        json.dump(stuff, output)
 {script}
 EOF
-    """.format(script=script, fifo_filename=fifo.name)
+    """.format(PYTHON_CMD=PYTHON_CMD, script=script, fifo_filename=fifo.name)
     script_file = create_tmp_file(script)
     input_file = create_tmp_file(input_str or "")
 
@@ -85,15 +88,14 @@ EOF
     env = os.environ.copy()
     env["LOAD_VIMPY"] = "0"
     p = sh.vim(*args, _tty_in=True, _env=env)
-    #err = clean_output(p.stdout.decode("ascii"))
-    output = p.stdout
+    err = output = p.stdout
 
     input_file.seek(0)
     changed = input_file.read().decode("utf8")
 
     sent_data = fifo.read()
     if sent_data:
-        output = pickle.loads(sent_data)
+        output = json.loads(sent_data)
     else:
         output = None
     return changed, output
@@ -247,7 +249,7 @@ pos2 = get_cursor_position()
 send([(word1, pos1), (word2, pos2)])
 """
         _, output = run_vim(script, self.sample_block)
-        self.assertEqual(output, [("Mary", (1, 6)), ("Mary", (5, 6))])
+        self.assertEqual(output, [["Mary", [1, 6]], ["Mary", [5, 6]]])
 
 
     def test_filetype(self):
@@ -292,7 +294,7 @@ data.append(get_cursor_position())
 send(data)
 """
         changed, output = run_vim(script, self.sample_block)
-        self.assertEqual(output, [(1,1), (2,3)])
+        self.assertEqual(output, [[1,1], [2,3]])
 
 
     def test_cursor_set_pos(self):
@@ -559,9 +561,9 @@ new_buffer("test2")
 send(get_buffers())
 """
         changed, output = run_vim(script, self.sample_text, commands=["qa!"])
-        del output[1]["name"]
+        del output["1"]["name"]
         self.assertDictEqual(output, {
-            1: {'flags': {'active': True,
+            "1": {'flags': {'active': True,
                 'alternate': False,
                 'current': True,
                 'errors': False,
@@ -570,7 +572,7 @@ send(get_buffers())
                 'readonly': False,
                 'unlisted': False},
                 },
-            2: {'flags': {'active': False,
+            "2": {'flags': {'active': False,
                 'alternate': False,
                 'current': False,
                 'errors': False,
@@ -579,7 +581,7 @@ send(get_buffers())
                 'readonly': False,
                 'unlisted': False},
                 'name': 'test1'},
-            3: {'flags': {'active': False,
+            "3": {'flags': {'active': False,
                 'alternate': True,
                 'current': False,
                 'errors': False,
