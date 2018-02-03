@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.15.0 - 2/3/18
+* python3 support
+
 ## 0.14.3 - 5/16/17
 * make visual selection callback argument optional
 * bugfix where mode preserving context can yield annoying errors
