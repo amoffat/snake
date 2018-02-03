@@ -128,6 +128,19 @@ replace_word("awesome")
         changed, output = run_vim(script, self.sample_text)
         self.assertEqual(changed, "Test quick brown awesome jumps over the lazy dog")
 
+    def test_get_in_quotes(self):
+        script = r"""
+keys("^4w")
+double = get_in_quotes()
+keys("$2b")
+single = get_in_quotes()
+send([double, single])
+"""
+        changed, output = run_vim(script, """something in "double quotes" and \
+                something in 'single quotes'""")
+        self.assertEqual(output, ["double quotes", "single quotes"])
+
+
     def test_get_word(self):
         script = r"""
 keys("^5w")
