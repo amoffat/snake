@@ -265,6 +265,28 @@ send([(word1, pos1), (word2, pos2)])
         self.assertEqual(output, [["Mary", [1, 6]], ["Mary", [5, 6]]])
 
 
+    def test_search_double_quote(self):
+        script = r"""
+keys("^")
+search('"')
+pos = get_cursor_position()
+send(pos)
+"""
+        _, output = run_vim(script, "once \"upon a ' time")
+        self.assertEqual(output, [1, 6])
+
+
+    def test_search_single_quote(self):
+        script = r"""
+keys("^")
+search("'")
+pos = get_cursor_position()
+send(pos)
+"""
+        _, output = run_vim(script, "once \"upon a ' time")
+        self.assertEqual(output, [1, 14])
+
+
     def test_filetype(self):
         script = r"""
 called = 0

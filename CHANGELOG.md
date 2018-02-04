@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.15.1 - 2/4/18
+* bugfix in escaping strings containing single quotes
+
 ## 0.15.0 - 2/3/18
 * python3 support
 

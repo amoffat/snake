@@ -10,7 +10,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.15.0"
+__version__ = "0.15.1"
 
 
 NORMAL_MODE = "n"
@@ -254,7 +254,7 @@ def escape_spaces(s):
     return s
 
 def escape_string_sq(s):
-    s = s.replace("'", r"\'")
+    s = s.replace("'", "''")
     return s
 
 def reselect_last_visual_selection():
