@@ -208,6 +208,9 @@ def get_current_file():
 def get_alternate_file():
     return expand("#:p")
 
+def get_cur_line():
+    return int(vim.eval("line('.')"))
+
 def get_mode():
     return vim.eval("mode(1)")
 
@@ -297,7 +300,7 @@ def get(name, namespace=None, scope=NS_GLOBAL):
 
 get_buffer_local = partial(get, scope=NS_BUFFER)
 
-def search(s, wrap=True, backwards=False, move=True):
+def search(s, wrap=True, backwards=False, move=True, curline=False):
     """ searches for string s, returning the (row, column) of the next match, or
     None if not found.  'move' moves the cursor to the match, 'backwards'
     specifies direction, 'wrap' for if searching should wrap around the end of
@@ -314,7 +317,14 @@ def search(s, wrap=True, backwards=False, move=True):
     s = escape_string_sq(s)
 
     def fn():
-        line = int(vim.eval("search('%s', '%s')" % (s, "".join(flags))))
+        stopline = ""
+        if curline:
+            line = get_cur_line()
+            stopline = ", {}".format(line)
+
+        cmd = "search('{str}', '{flags}'{stopline})".format(str=s,
+                flags="".join(flags), stopline=stopline)
+        line = int(vim.eval(cmd))
         match = line != 0
 
         if match:

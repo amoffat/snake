@@ -270,7 +270,7 @@ def reverse_everything(selected):
 
 # Searching
 
-### search(s, wrap=True, backwards=False, move=True)
+### search(s, wrap=True, backwards=False, move=True, curline=False)
 
 Returns the `(row, col)` of the string `s`.  By default, it will move the cursor
 there.
