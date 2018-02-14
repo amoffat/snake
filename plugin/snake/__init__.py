@@ -10,7 +10,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.15.1"
+__version__ = "0.15.2"
 
 
 NORMAL_MODE = "n"
@@ -380,10 +380,14 @@ def get_word():
     keys('"0yiw')
     return get_register("0")
 
-@preserve_state()
 def delete_word():
     """ deletes the word under the cursor """
-    keys("diw")
+    # we don't do a @preserve_state because we want the cursor to move as the
+    # word is deleted
+    with preserve_mode():
+        with preserve_registers("0"):
+            keys('"0diw')
+            return get_register("0")
 
 @preserve_state()
 def replace_word(rep):

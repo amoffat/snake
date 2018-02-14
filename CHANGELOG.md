@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.15.2 - 2/14/18
+* `delete_word` shouldn't preserve cursor, and it should return word
+
 ## 0.15.1 - 2/4/18
 * bugfix in escaping strings containing single quotes
 * support for `search` only searching current line
