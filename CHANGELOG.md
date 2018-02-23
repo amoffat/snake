@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.15.3 -
+* add `set_filetype` for easily associating extensions to file types
+
 ## 0.15.2 - 2/14/18
 * `delete_word` shouldn't preserve cursor, and it should return word
 
