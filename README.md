@@ -108,6 +108,13 @@ Add the following line to your Vundle plugin block of your `.vimrc`:
 Plugin 'amoffat/snake'
 ```
 
+And the following lines to the end of the file:
+```
+if filereadable(expand("~/.vim/bundle/snake/plugin/snake.vim"))
+    source ~/.vim/bundle/snake/plugin/snake.vim
+endif
+```
+
 Re-source your `.vimrc`.  Then `:PluginInstall`
 
 ## Pathogen
@@ -120,6 +127,13 @@ Add the following line to your Neobundle plugin block of your `.vimrc`:
 
 ```
 NeoBundle 'amoffat/snake'
+```
+
+And the following lines to the end of the file:
+```
+if filereadable(expand("~/.vim/bundle/snake/plugin/snake.vim"))
+    source ~/.vim/bundle/snake/plugin/snake.vim
+endif
 ```
 
 Re-source your `.vimrc`. Then `NeoBundleInstall`
