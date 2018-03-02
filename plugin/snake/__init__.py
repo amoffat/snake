@@ -10,7 +10,7 @@ import time
 import inspect
 import re
 
-__version__ = "0.15.2"
+__version__ = "0.15.3"
 
 
 NORMAL_MODE = "n"
@@ -720,6 +720,13 @@ when_buffer_is = partial(on_autocmd, "FileType")
 when_buffer_is.__doc__ = """ A decorator for functions you wish to run when the buffer
     filetype=filetype. This is useful if you want to set some keybindings for a
     python buffer that you just opened """
+
+
+def set_filetype(pat, ftype):
+    s = "au BufRead,BufNewFile {pat} set filetype={ftype}"
+    s = s.format(pat=pat, ftype=ftype)
+    command(s)
+
 
 if "snake.plugin_loader" in sys.modules:
     plugin_loader = reload(plugin_loader)

@@ -90,6 +90,7 @@ with preserve_registers("a"):
 * get_runtime_path()
 * set_runtime_path(paths)
 * multi_command(\*cmds)
+* set_filetype(pat, ftype)
 
 # Visual
 
