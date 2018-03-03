@@ -28,6 +28,12 @@ except ImportError:
 WORKON_HOME = os.environ.get("WORKON_HOME", "~/.virtualenvs")
 VENV_BASE_DIR = abspath(expanduser(WORKON_HOME))
 BUNDLE_DIR = abspath(expanduser("~/.vim/bundle"))
+IS_PY3 = sys.version_info[0] == 3
+
+
+if IS_PY3:
+    def execfile(name, ctx):
+        exec(open(name).read(), ctx)
 
 
 def venv_exists(plugin_name):
@@ -37,7 +43,15 @@ def pip_install(reqs_file, install_dir):
     """ takes a requirements file and installs all the reqs in that file into
     the virtualenv """
     args = ["install", "--quiet", "-t", install_dir, "-r", reqs_file]
-    pip.main(args)
+    exit_code = pip.main(args)
+
+    # we have to specify --system sometimes on ubuntu, because ubuntu can ship
+    # with an older pip which defaults to --user, which conflicts with -t.
+    # --system effectively disables --user (ugly workaround)
+    if exit_code != 0:
+        args.append("--system")
+        pip.main(args)
+
 
 def venv_name_from_module_name(name):
     return "snake_plugin_%s" % name

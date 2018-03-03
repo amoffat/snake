@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.4 - 3/3/18
+* bugfix with old pip version creating virtualenvs
+* bugfix with python3 not having execfile when installing virtualenvs
+
 ## 0.15.3 - 3/1/18
 * add `set_filetype` for easily associating extensions to file types
 
