@@ -12,6 +12,7 @@ press `<leader>c`:
 
 ```python
 import snake
+import re
 
 @snake.key_map("<leader>c")
 def toggle_snake_case_camel_case():
