@@ -3,6 +3,7 @@ import sys
 import os
 from os.path import expanduser, exists, abspath, join, dirname
 from contextlib import contextmanager
+import subprocess
 import logging
 import snake
 
@@ -42,15 +43,15 @@ def venv_exists(plugin_name):
 def pip_install(reqs_file, install_dir):
     """ takes a requirements file and installs all the reqs in that file into
     the virtualenv """
-    args = ["install", "--quiet", "-t", install_dir, "-r", reqs_file]
-    exit_code = pip.main(args)
+    args = ["pip", "install", "--quiet", "-t", install_dir, "-r", reqs_file]
+    exit_code = subprocess.call(args)
 
     # we have to specify --system sometimes on ubuntu, because ubuntu can ship
     # with an older pip which defaults to --user, which conflicts with -t.
     # --system effectively disables --user (ugly workaround)
     if exit_code != 0:
         args.append("--system")
-        pip.main(args)
+        exit_code = subprocess.call(args)
 
 
 def venv_name_from_module_name(name):
