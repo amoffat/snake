@@ -439,6 +439,17 @@ keys("Wviwa")
         self.assertEqual(output, "quick")
         self.assertEqual(changed, "The really fast brown fox jumps over the lazy dog")
 
+    def test_insert_key_map(self):
+        script = r"""
+@key_map("a", mode=INSERT_MODE)
+def change_words_and_move():
+    replace_word('Test')
+    keys('1w')
+
+keys("aaaa")
+"""
+        changed, output = run_vim(script, self.sample_text)
+        self.assertEqual(changed, "Test Test Test Test jumps over the lazy dog")
 
 
 class OptionsTests(VimTests):
