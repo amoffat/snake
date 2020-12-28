@@ -11,7 +11,7 @@ import re
 THIS_DIR = dirname(abspath(__file__))
 SNAKE_DIR = join(THIS_DIR, "plugin")
 
-# as distinguised from the python *vim* is running
+# as distinguished from the python *vim* is running
 TEST_IS_PY3 = sys.version_info[0] == 3
 
 version_str = sh.vim(version=True).strip()
