@@ -14,14 +14,14 @@ log = logging.getLogger("snake.plugins")
 # virtualenv may not exist, but we also may not need it if the user is just
 # running scripts that have no dependencies outside of the stdlib
 try:
-    import virtualenv
-except ImportError:
-    virtualenv = None
-
-try:
     import pip
 except ImportError:
     pip = None
+
+try:
+    import virtualenv
+except ImportError:
+    virtualenv = None
 
 # let's use our virtualenv_wrapper home if we have one, else default to
 # something sensible.  we'll use this to create our new virtualenvs for plugins
