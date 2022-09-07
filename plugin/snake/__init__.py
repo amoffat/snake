@@ -456,7 +456,10 @@ def key_map(key, maybe_fn=None, mode=NORMAL_MODE, recursive=False,
             fn = wrapped
 
         call = register_fn(fn)
-        command("%s <silent> %s :%s %s<CR>" % (map_command, key, PYTHON_CMD, call))
+        if mode == INSERT_MODE:
+            command("%s %s <C-\\><C-O>:%s %s<CR>" % (map_command, key, PYTHON_CMD, call))
+        else:
+            command("%s <silent> %s :%s %s<CR>" % (map_command, key, PYTHON_CMD, call))
 
     else:
         command("%s %s %s" % (map_command, key, maybe_fn))
